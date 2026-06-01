@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>日本語長文打字練習（Japanese Reading Typing Trainer）</title>
+    <!-- 引入外部依赖 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -11,6 +12,15 @@
     <style>
         body { background-color: #F8F6F1; font-family: 'Noto Sans JP', 'PingFang SC', sans-serif; }
         ruby { ruby-position: over; }
+        /* 拟真文库本光标动画 */
+        .typing-cursor {
+            border-bottom: 3px solid #1E3A5F;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { border-color: #1E3A5F; }
+            50% { border-color: transparent; }
+        }
     </style>
 </head>
 <body>
@@ -18,7 +28,7 @@
 
     <script type="text/babel">
         // ==========================================
-        // 1. 内置数据
+        // 1. 内置多难度文章库
         // ==========================================
         const SAMPLE_ARTICLES = [
           {
@@ -27,7 +37,7 @@
             level: "N3",
             category: "文化",
             duration: 2,
-            translation: "今年的樱花开放时间预计会比往年更早。气象厅表示，由于春季气温持续偏高，各地红绿灯和公园的樱花树将提早迎来绽放，建议大家提早做好赏樱的准备。",
+            translation: "今年的樱花开放时间预计会比往年更早。气象厅表示，由于春季气温持续偏高，各地公园的樱花树将提早迎来绽放，建议大家提早做好准备。",
             elements: [
               { text: "今年", kana: "ことし", isKanji: true, meaning: "今年" },
               { text: "の", kana: "の", isKanji: false },
@@ -64,14 +74,14 @@
             level: "N2",
             category: "科技",
             duration: 3,
-            translation: "日本的研究团队成功开发出了一款新型的轻量化蓄电池。该技术不仅能大幅度延长智能手机和电动汽车的续航时间，而且制造成本极低，预计将在两年内实现大规模商业化生产。",
+            translation: "日本的研究团队成功开发出了一款新型的轻量化蓄电池。该技术不仅能大幅度延长续航时间，而且制造成本极低。",
             elements: [
               { text: "新しい", kana: "あたらしい", isKanji: true, meaning: "新的" },
               { text: "電池", kana: "でんち", isKanji: true, meaning: "电池" },
               { text: "の", kana: "の", isKanji: false },
               { text: "技術", kana: "ぎじゅつ", isKanji: true, meaning: "技术" },
               { text: "を", kana: "を", isKanji: false },
-              { text: "開発", kana: "かいはつ", isKanji: true, meaning: "开发" },
+              { text: "開発", kana: "かいhatsu", kana: "かいはつ", isKanji: true, meaning: "开发" },
               { text: "しました", kana: "しました", isKanji: false },
               { text: "。", kana: "。", isKanji: false },
               { text: "経済", kana: "けいざい", isKanji: true, meaning: "经济" },
@@ -81,6 +91,29 @@
               { text: "大きい", kana: "おおきい", isKanji: true, meaning: "大的" },
               { text: "見込み", kana: "みこみ", isKanji: true, meaning: "预估" },
               { text: "です", kana: "です", isKanji: false },
+              { text: "。", kana: "。", isKanji: false }
+            ]
+          },
+          {
+            id: "art_003",
+            title: "いっしょに お茶を 飲みませんか",
+            level: "N5",
+            category: "生活",
+            duration: 1,
+            translation: "要不要一起喝杯茶呢？上周我从朋友那里得到了非常美味的茶。星期天如果有空的话，请一定来我家玩吧。",
+            elements: [
+              { text: "友達", kana: "ともだち", isKanji: true, meaning: "朋友" },
+              { text: "に", kana: "に", isKanji: false },
+              { text: "美味しい", kana: "おいしい", isKanji: true, meaning: "美味的" },
+              { text: "お茶", kana: "おちゃ", isKanji: true, meaning: "茶" },
+              { text: "を", kana: "を", isKanji: false },
+              { text: "もらいました", kana: "もらいました", isKanji: false },
+              { text: "。", kana: "。", isKanji: false },
+              { text: "日曜日", kana: "にちようび", isKanji: true, meaning: "星期天" },
+              { text: "に", kana: "に", isKanji: false },
+              { text: "一緒", kana: "いっしょ", isKanji: true, meaning: "一起" },
+              { text: "に", kana: "に", isKanji: false },
+              { text: "飲みませんか", kana: "のみませんか", isKanji: true, meaning: "不喝吗" },
               { text: "。", kana: "。", isKanji: false }
             ]
           }
@@ -105,10 +138,10 @@
           kya: "きゃ", kyu: "きゅ", kyo: "きょ",
           sha: "しゃ", shu: "しゅ", sho: "しょ", sya: "しゃ", syu: "しゅ", syo: "しょ",
           cha: "ちゃ", chu: "ちゅ", cho: "ちょ", cya: "ちゃ", cyu: "ちゅ", cyo: "ちょ",
-          nya: "にゃ", nyu: "にゅ", nyo: "にょ",
+          nya: "にゃ", nyu: "にょ", nyo: "にょ",
           hya: "ひゃ", hyu: "ひゃ", hyo: "ひょ",
           mya: "みゃ", myu: "みゃ", myo: "みょ",
-          rya: "りゃ", ryu: "りゅ", ryo: "りょ",
+          rya: "りゃ", ryu: "りょ", ryo: "りょ",
           gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
           ja: "じゃ", ju: "じゅ", jo: "じょ", zya: "じゃ", zyu: "じゅ", zyo: "じょ",
           bya: "びゃ", byu: "びゅ", byo: "びょ",
@@ -140,18 +173,25 @@
         }
 
         // ==========================================
-        // 2. 核心组件逻辑
+        // 2. 主程序组件
         // ==========================================
         function JapaneseTypingTrainer() {
           const [view, setView] = React.useState("practice");
           const [challengeMode, setChallengeMode] = React.useState(false);
+          
+          // 难度选择状态：'ALL' 代表全选，或者指定 'N5', 'N4', 'N3' 等
+          const [selectedLevel, setSelectedLevel] = React.useState("ALL");
+          
           const [article, setArticle] = React.useState(SAMPLE_ARTICLES[0]);
           const [recentArticles, setRecentArticles] = React.useState([]);
           
+          // 彻底重构的单字/单假名定位级核心状态
           const [currentElementIdx, setCurrentElementIdx] = React.useState(0);
-          const [typedKanaInElement, setTypedKanaInElement] = React.useState("");
+          const [charProgressInElement, setCharProgressInElement] = React.useState(0); // 在当前词组里打到了第几个假名
           const [inputBuffer, setInputBuffer] = React.useState("");
-          
+          const [isError, setIsError] = React.useState(false); // 当前敲击是否错误
+
+          // 统计
           const [startTime, setStartTime] = React.useState(null);
           const [totalCorrectChars, setTotalCorrectChars] = React.useState(0);
           const [mistakeCount, setMistakeCount] = React.useState(0);
@@ -167,6 +207,7 @@
 
           const inputRef = React.useRef(null);
 
+          // 初始化加载 LocalStorage
           React.useEffect(() => {
             const saved = localStorage.getItem("jp_typing_trainer_data");
             if (saved) {
@@ -179,6 +220,7 @@
             localStorage.setItem("jp_typing_trainer_data", JSON.stringify(newData));
           };
 
+          // 计时看板
           React.useEffect(() => {
             if (!startTime || totalCorrectChars === 0) return;
             const interval = setInterval(() => {
@@ -198,36 +240,86 @@
 
           React.useEffect(() => {
             focusHiddenInput();
-          }, [currentElementIdx, view]);
+          }, [currentElementIdx, charProgressInElement, view]);
+
+          // 根据当前选中的难度，切换下一篇文章
+          const switchRandomArticle = (forcedLevel = selectedLevel) => {
+            let pool = SAMPLE_ARTICLES;
+            if (forcedLevel !== "ALL") {
+              pool = SAMPLE_ARTICLES.filter(art => art.level === forcedLevel);
+            }
+            
+            if (pool.length === 0) {
+              alert(`抱歉，目前题库中暂无 ${forcedLevel} 难度的文章，已为你自动展示全部。`);
+              pool = SAMPLE_ARTICLES;
+              setSelectedLevel("ALL");
+            }
+
+            const available = pool.filter(art => !recentArticles.includes(art.id));
+            const finalPool = available.length > 0 ? available : pool;
+            const randomArt = finalPool[Math.floor(Math.random() * finalPool.length)];
+            
+            setArticle(randomArt);
+            resetTrainer();
+          };
+
+          // 切换顶层难度选择
+          const handleLevelChange = (level) => {
+            setSelectedLevel(level);
+            switchRandomArticle(level);
+          };
+
+          const resetTrainer = () => {
+            setCurrentElementIdx(0);
+            setCharProgressInElement(0);
+            setInputBuffer("");
+            setIsError(false);
+            setStartTime(null);
+            setTotalCorrectChars(0);
+            setMistakeCount(0);
+            setWpm(0);
+            setAccuracy(100);
+          };
 
           const targetElement = article.elements[currentElementIdx];
+          // 当前需要输入的那个精准假名字符
+          const targetChar = targetElement ? targetElement.kana[charProgressInElement] : "";
 
+          // 核心键盘逻辑：精确到单个字的光标流控制
           const handleInputChange = (e) => {
             if (!startTime) setStartTime(Date.now());
             const value = e.target.value;
             setInputBuffer(value);
+            setIsError(false);
 
+            // 将当前累积输入的罗马字转换为假名
             const { kana, remainder } = convertRomajiToKana(value);
 
             if (kana.length > 0) {
-              const nextKanaProgress = typedKanaInElement + kana;
-              const targetKana = targetElement.kana;
-
-              if (targetKana.startsWith(nextKanaProgress)) {
-                setTypedKanaInElement(nextKanaProgress);
-                setTotalCorrectChars(prev => prev + kana.length);
-                setInputBuffer(remainder);
-
-                if (nextKanaProgress === targetKana) {
+              // 拿转换出来的假名跟当前位置的目标假名做对比
+              if (targetChar && kana === targetChar) {
+                // 打对了！光标向前跳一格
+                setTotalCorrectChars(prev => prev + 1);
+                setInputBuffer(remainder); // 消费掉已经敲对的罗马字字母
+                
+                const nextProgress = charProgressInElement + 1;
+                if (nextProgress < targetElement.kana.length) {
+                  // 当前词组还没打完，继续下一个字
+                  setCharProgressInElement(nextProgress);
+                } else {
+                  // 当前词组（汉字）打完了，跳到下一个大词组块
                   if (currentElementIdx < article.elements.length - 1) {
                     setCurrentElementIdx(prev => prev + 1);
-                    setTypedKanaInElement("");
+                    setCharProgressInElement(0);
                     setInputBuffer("");
                   } else {
+                    // 全文结束
                     handleArticleCompletion();
                   }
                 }
               } else {
+                // 打错了！触发红色警报，且不准跳到下一个字
+                setIsError(true);
                 setMistakeCount(prev => prev + 1);
                 if (targetElement.isKanji) {
                   logMistake(targetElement.text, targetElement.kana, targetElement.meaning || "暂无释义");
@@ -259,41 +351,20 @@
               totalChars: userData.totalChars + totalCorrectChars
             });
 
-            alert("🎉 恭喜您完成了整篇长文阅读与打字练习！");
+            alert("🎉 恭喜你读完了整篇长文！打字正确率非常棒！");
             resetTrainer();
-            switchRandomArticle();
-          };
-
-          const resetTrainer = () => {
-            setCurrentElementIdx(0);
-            setTypedKanaInElement("");
-            setInputBuffer("");
-            setStartTime(null);
-            setTotalCorrectChars(0);
-            setMistakeCount(0);
-            setWpm(0);
-            setAccuracy(100);
-          };
-
-          const switchRandomArticle = () => {
-            const available = SAMPLE_ARTICLES.filter(art => !recentArticles.includes(art.id));
-            const pool = available.length > 0 ? available : SAMPLE_ARTICLES;
-            const randomArt = pool[Math.floor(Math.random() * pool.length)];
-            setArticle(randomArt);
-            resetTrainer();
+            switchRandomArticle(selectedLevel);
           };
 
           const startMistakeReview = (word) => {
             const customArticle = {
               id: `review_${Date.now()}`,
-              title: `针对性复习: ${word.kanji}`,
+              title: `专项突破: ${word.kanji}`,
               level: word.level,
               category: "生活",
               duration: 1,
-              translation: `专项强化错词：【${word.kanji}】。释义为：${word.meaning}。`,
+              translation: `针对错词【${word.kanji}】建立的专项突击练习。`,
               elements: [
-                { text: "重点复习", kana: "ほんきふくしゅう", isKanji: false },
-                { text: "：", kana: "：", isKanji: false },
                 { text: word.kanji, kana: word.kana, isKanji: true, meaning: word.meaning },
                 { text: "の", kana: "の", isKanji: false },
                 { text: "練習", kana: "れんしゅう", isKanji: true, meaning: "练习" }
@@ -306,92 +377,157 @@
 
           return (
             <div className="min-h-screen text-[#1E3A5F] font-sans antialiased transition-colors duration-200">
-              <header className="border-b border-[#E6E1D6] px-6 py-4 flex justify-between items-center max-w-5xl mx-auto">
+              {/* 顶部横头面板 */}
+              <header className="border-b border-[#E6E1D6] px-6 py-4 flex flex-wrap justify-between items-center max-w-5xl mx-auto gap-4">
                 <div className="flex items-center space-x-3">
                   <span className="text-xl font-bold tracking-wide text-[#1E3A5F]">日本語縦横</span>
-                  <span className="text-xs px-2 py-0.5 bg-[#5A6B84]/10 text-[#5A6B84] rounded-full">文库阅读版</span>
+                  <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-medium">精准光标版</span>
                 </div>
-                <nav className="flex space-x-4">
+                
+                {/* 新增：多难度快速筛选组件 */}
+                <div className="flex items-center bg-white border border-[#E6E1D6] rounded-lg p-1 space-x-1 text-xs">
+                  <span className="text-[#5A6B84] px-2 font-medium">选择难度:</span>
+                  {["ALL", "N5", "N3", "N2"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => handleLevelChange(lvl)}
+                      className={`px-3 py-1 rounded transition-all ${selectedLevel === lvl ? "bg-[#1E3A5F] text-white font-bold" : "text-[#5A6B84] hover:bg-[#F8F6F1]"}`}
+                    >
+                      {lvl === "ALL" ? "全选" : lvl}
+                    </button>
+                  ))}
+                </div>
+
+                <nav className="flex space-x-2">
                   <button onClick={() => setView("practice")} className={`px-4 py-1.5 text-sm rounded-md transition-all ${view === "practice" ? "bg-[#1E3A5F] text-white shadow-sm" : "text-[#5A6B84] hover:text-[#1E3A5F]"}`}>长文练习</button>
-                  <button onClick={() => setView("mistakes")} className={`px-4 py-1.5 text-sm rounded-md transition-all ${view === "mistakes" ? "bg-[#1E3A5F] text-white shadow-sm" : "text-[#5A6B84] hover:text-[#1E3A5F]"}`}>易错词本 ({userData.mistakeWords.length})</button>
+                  <button onClick={() => setView("mistakes")} className={`px-4 py-1.5 text-sm rounded-md transition-all ${view === "mistakes" ? "bg-[#1E3A5F] text-white shadow-sm" : "text-[#5A6B84] hover:text-[#1E3A5F]"}`}>易错词 ({userData.mistakeWords.length})</button>
                 </nav>
               </header>
 
               <main className="max-w-4xl mx-auto px-4 py-8 md:py-12" onClick={focusHiddenInput}>
                 {view === "practice" ? (
                   <div>
-                    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#E6E1D6] pb-4">
+                    {/* 文章标题区 */}
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#E6E1D6] pb-4">
                       <div>
                         <h1 className="text-2xl font-semibold tracking-tight text-[#1E3A5F] mb-2">{article.title}</h1>
                         <div className="flex items-center space-x-3 text-xs text-[#5A6B84]">
-                          <span className="px-2 py-0.5 bg-[#1E3A5F]/5 rounded text-[#1E3A5F] font-medium">{article.level}</span>
+                          <span className="px-2 py-0.5 bg-[#1E3A5F]/5 rounded text-[#1E3A5F] font-bold">{article.level}</span>
                           <span>•</span><span>分类: {article.category}</span><span>•</span><span>预计时间: {article.duration} 分钟</span>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <button onClick={(e) => { e.stopPropagation(); setChallengeMode(!challengeMode); }} className={`text-xs px-3 py-1.5 rounded border transition-colors ${challengeMode ? "bg-[#C65D5D]/10 border-[#C65D5D] text-[#C65D5D]" : "bg-white border-[#E6E1D6] text-[#5A6B84]"}`}>{challengeMode ? "挑战模式 (隐翻译)" : "学习模式 (显翻译)"}</button>
-                        <button onClick={(e) => { e.stopPropagation(); switchRandomArticle(); }} className="text-xs px-3 py-1.5 bg-white border border-[#E6E1D6] rounded text-[#1E3A5F] hover:bg-white/60">换一波长文 ↻</button>
+                        <button onClick={(e) => { e.stopPropagation(); switchRandomArticle(selectedLevel); }} className="text-xs px-3 py-1.5 bg-white border border-[#E6E1D6] rounded text-[#1E3A5F] hover:bg-white/60">随机切题 ↻</button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2 md:gap-4 mb-8 bg-white/60 backdrop-blur p-4 rounded-xl shadow-sm border border-[#E6E1D6]/60 text-center">
+                    {/* 仪表盘 */}
+                    <div className="grid grid-cols-5 gap-2 md:gap-4 mb-6 bg-white/60 backdrop-blur p-4 rounded-xl shadow-sm border border-[#E6E1D6]/60 text-center">
                       <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">WPM</p><p className="text-lg md:text-xl font-bold font-mono">{wpm}</p></div>
-                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">正确字</p><p className="text-lg md:text-xl font-bold font-mono text-emerald-700">{totalCorrectChars}</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">已打对</p><p className="text-lg md:text-xl font-bold font-mono text-emerald-700">{totalCorrectChars} 字符</p></div>
                       <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">正确率</p><p className="text-lg md:text-xl font-bold font-mono">{accuracy}%</p></div>
-                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">轻误击</p><p className="text-lg md:text-xl font-bold font-mono text-[#C65D5D]">{mistakeCount}</p></div>
-                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">连续天数</p><p className="text-lg md:text-xl font-bold font-mono text-amber-700">{userData.streakDays}天</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">错击数</p><p className="text-lg md:text-xl font-bold font-mono text-[#C65D5D]">{mistakeCount}</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">坚持天数</p><p className="text-lg md:text-xl font-bold font-mono text-amber-700">{userData.streakDays}天</p></div>
                     </div>
 
-                    <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-[#E6E1D6] leading-relaxed mb-8 select-none relative">
+                    {/* 核心打字阅读纸张区 */}
+                    <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-[#E6E1D6] leading-relaxed mb-6 select-none relative">
+                      
+                      {/* 隐藏的软键盘捕获框 */}
                       <input ref={inputRef} type="text" value={inputBuffer} onChange={handleInputChange} className="absolute opacity-0 pointer-events-none inset-0 w-full h-full z-0 cursor-default" autoComplete="off" autoCapitalize="off" spellCheck="false" autoCorrect="off" />
-                      <div className="text-xl md:text-2xl tracking-widest text-[#1E3A5F] z-10 relative flex flex-wrap content-start items-center gap-y-6">
-                        {article.elements.map((el, idx) => {
-                          let colorClass = "text-gray-400";
-                          if (idx < currentElementIdx) colorClass = "text-emerald-600 font-medium";
-                          else if (idx === currentElementIdx) colorClass = "text-[#1E3A5F] bg-blue-50 border-b-2 border-[#1E3A5F] font-bold";
+                      
+                      {/* 颗粒级高亮文本流 */}
+                      <div className="text-xl md:text-2xl tracking-widest text-[#1E3A5F] z-10 relative flex flex-wrap content-start items-center gap-y-8">
+                        {article.elements.map((el, elIdx) => {
+                          let elementStyle = "text-gray-400"; // 默认未打到的词显示灰色
+                          
+                          if (elIdx < currentElementIdx) {
+                            elementStyle = "text-emerald-600 font-medium"; // 历史已打完的词变绿
+                          }
+
+                          // 关键：如果正处于当前正在输入的词组，进入精细化渲染
+                          if (elIdx === currentElementIdx) {
+                            return (
+                              <span key={elIdx} className={`inline-block px-1 rounded transition-all duration-150 bg-slate-50 ring-1 ring-slate-200/60`}>
+                                <ruby>
+                                  {/* 原文汉字/假名展示 */}
+                                  <span>{el.text}</span>
+                                  {/* 上方振假名：根据用户在这个词组内部打到了哪一个假名，进行单个字精细拆解 */}
+                                  <rt className="text-xs tracking-normal font-mono select-none pb-1 block">
+                                    {el.kana.split("").map((char, charIdx) => {
+                                      let charStyle = "text-[#5A6B84]"; // 还未打到的假名颜色
+                                      let cursorClass = "";
+
+                                      if (charIdx < charProgressInElement) {
+                                        charStyle = "text-emerald-600 font-bold"; // 打对的单个假名变绿
+                                      } else if (charIdx === charProgressInElement) {
+                                        // 刚好是当前光标所在的那个字！
+                                        charStyle = isError ? "text-white bg-[#C65D5D] px-0.5 rounded font-bold" : "text-[#1E3A5F] font-black"; 
+                                        cursorClass = isError ? "" : "typing-cursor"; // 打错变红，打对则闪烁光标
+                                      }
+
+                                      return (
+                                        <span key={charIdx} className={`${charStyle} ${cursorClass} mx-px px-0.5`}>
+                                          {char}
+                                        </span>
+                                      );
+                                    })}
+                                  </rt>
+                                </ruby>
+                              </span>
+                            );
+                          }
+
+                          // 其他普通状态词组的正常渲染
                           return (
-                            <span key={idx} className={`inline-block px-0.5 rounded transition-all duration-150 ${colorClass}`}>
+                            <span key={elIdx} className={`inline-block px-0.5 transition-all ${elementStyle}`}>
                               <ruby>
                                 {el.text}
-                                <rt className="text-xs tracking-normal font-normal text-[#5A6B84] select-none pb-1">{el.kana}</rt>
+                                <rt className="text-xs tracking-normal font-normal text-[#5A6B84]/70 select-none pb-1">{el.kana}</rt>
                               </ruby>
                             </span>
                           );
                         })}
                       </div>
-                      <div className="mt-8 pt-4 border-t border-[#F8F6F1] flex items-center justify-between text-sm text-[#5A6B84]">
+
+                      {/* 底部输入引导反馈条 */}
+                      <div className="mt-10 pt-4 border-t border-[#F8F6F1] flex flex-wrap items-center justify-between text-sm text-[#5A6B84] gap-2">
                         <div className="flex items-center space-x-2">
-                          <span className="w-2 h-2 rounded-full bg-[#1E3A5F] animate-pulse" />
-                          <span>当前目标假名: <span className="font-bold font-mono text-[#1E3A5F]">{targetElement?.kana}</span></span>
+                          <span className={`w-2.5 h-2.5 rounded-full ${isError ? "bg-[#C65D5D] animate-ping" : "bg-[#1E3A5F] animate-pulse"}`} />
+                          <span>盯准当前这个字: <span className="font-bold font-mono text-base bg-slate-100 px-2 py-0.5 rounded text-[#1E3A5F]">{targetChar || "无"}</span></span>
                         </div>
-                        {inputBuffer && (
-                          <div className="bg-[#F8F6F1] px-3 py-1 rounded font-mono text-xs">正在缓冲输入: <span className="text-[#C65D5D] font-bold">{inputBuffer}</span></div>
-                        )}
+                        <div className="flex items-center space-x-2 text-xs">
+                          {isError && <span className="text-[#C65D5D] font-bold bg-[#C65D5D]/10 px-2 py-0.5 rounded">罗马字拼写不匹配，请重新输入！</span>}
+                          {inputBuffer && <span className="bg-[#F8F6F1] px-2 py-1 rounded font-mono">当前已敲键: <strong className="text-[#1E3A5F]">{inputBuffer}</strong></span>}
+                        </div>
                       </div>
                     </div>
 
+                    {/* 中文对照 */}
                     {!challengeMode && (
                       <div className="bg-[#5A6B84]/5 p-5 rounded-xl border border-[#E6E1D6]/40 text-sm leading-relaxed text-[#5A6B84]">
-                        <p className="font-semibold text-xs uppercase tracking-wider mb-2 text-[#1E3A5F]/70">✍️ 中文译文对照</p>
+                        <p className="font-semibold text-xs uppercase tracking-wider mb-2 text-[#1E3A5F]/70">✍️ 中文翻译参考</p>
                         {article.translation}
                       </div>
                     )}
                   </div>
                 ) : (
+                  /* 错词本 */
                   <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#E6E1D6]">
                     <div className="flex justify-between items-center mb-6">
                       <div>
                         <h2 className="text-xl font-bold text-[#1E3A5F]">本地个人弱点词库</h2>
-                        <p className="text-xs text-[#5A6B84] mt-1">系统会自动追踪打字时识别不准或假名拼错的汉字。</p>
+                        <p className="text-xs text-[#5A6B84] mt-1">系统已精确到具体汉字拼音进行智能捕捉。</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-[#5A6B84]">总累计练习量</span>
+                        <span className="text-xs text-[#5A6B84]">累计总阅读量</span>
                         <p className="text-lg font-bold font-mono text-[#1E3A5F]">{userData.totalChars} 字</p>
                       </div>
                     </div>
 
                     {userData.mistakeWords.length === 0 ? (
-                      <div className="text-center py-16 border-2 border-dashed border-[#E6E1D6] rounded-xl text-[#5A6B84]">🌲 目前还没有错词记录。</div>
+                      <div className="text-center py-16 border-2 border-dashed border-[#E6E1D6] rounded-xl text-[#5A6B84]">🌲 完美！目前还没有错词记录。</div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm border-collapse">
@@ -421,7 +557,7 @@
                   </div>
                 )}
               </main>
-              <footer className="max-w-4xl mx-auto text-center py-8 text-xs text-[#5A6B84]/50 border-t border-[#E6E1D6]/40 mt-12">采用 LocalStorage 进行完全去中心化无痕学习</footer>
+              <footer className="max-w-4xl mx-auto text-center py-8 text-xs text-[#5A6B84]/50 border-t border-[#E6E1D6]/40 mt-12">去中心化无痕学习模式 • 打对才跳字光标系统已激活</footer>
             </div>
           );
         }
