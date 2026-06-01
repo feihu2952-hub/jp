@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本語長文打字練習（Japanese Reading Typing Trainer）</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { background-color: #F8F6F1; font-family: 'Noto Sans JP', 'PingFang SC', sans-serif; }
+        ruby { ruby-position: over; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // ==========================================
+        // 1. 内置数据
+        // ==========================================
+        const SAMPLE_ARTICLES = [
+          {
+            id: "art_001",
+            title: "桜の開花予想",
+            level: "N3",
+            category: "文化",
+            duration: 2,
+            translation: "今年的樱花开放时间预计会比往年更早。气象厅表示，由于春季气温持续偏高，各地红绿灯和公园的樱花树将提早迎来绽放，建议大家提早做好赏樱的准备。",
+            elements: [
+              { text: "今年", kana: "ことし", isKanji: true, meaning: "今年" },
+              { text: "の", kana: "の", isKanji: false },
+              { text: "桜", kana: "さくら", isKanji: true, meaning: "樱花" },
+              { text: "の", kana: "の", isKanji: false },
+              { text: "開花", kana: "かいか", isKanji: true, meaning: "开花" },
+              { text: "は", kana: "は", isKanji: false },
+              { text: "平年", kana: "へいねん", isKanji: true, meaning: "往年" },
+              { text: "より", kana: "より", isKanji: false },
+              { text: "早い", kana: "はやい", isKanji: true, meaning: "早的" },
+              { text: "予想", kana: "よそう", isKanji: true, meaning: "预测" },
+              { text: "です", kana: "です", isKanji: false },
+              { text: "。", kana: "。", isKanji: false },
+              { text: "気象庁", kana: "きしょうちょう", isKanji: true, meaning: "气象厅" },
+              { text: "に", kana: "に", isKanji: false },
+              { text: "よると", kana: "よると", isKanji: false },
+              { text: "春", kana: "はる", isKanji: true, meaning: "春天" },
+              { text: "の", kana: "の", isKanji: false },
+              { text: "気温", kana: "きおん", isKanji: true, meaning: "气温" },
+              { text: "が", kana: "が", isKanji: false },
+              { text: "高い", kana: "たかい", isKanji: true, meaning: "高的" },
+              { text: "ため", kana: "ため", isKanji: false },
+              { text: "、", kana: "、", isKanji: false },
+              { text: "準備", kana: "じゅんび", isKanji: true, meaning: "准备" },
+              { text: "が", kana: "が", isKanji: false },
+              { text: "必要", kana: "ひつよう", isKanji: true, meaning: "必要" },
+              { text: "です", kana: "です", isKanji: false },
+              { text: "。", kana: "。", isKanji: false }
+            ]
+          },
+          {
+            id: "art_002",
+            title: "日本の新しい技術",
+            level: "N2",
+            category: "科技",
+            duration: 3,
+            translation: "日本的研究团队成功开发出了一款新型的轻量化蓄电池。该技术不仅能大幅度延长智能手机和电动汽车的续航时间，而且制造成本极低，预计将在两年内实现大规模商业化生产。",
+            elements: [
+              { text: "新しい", kana: "あたらしい", isKanji: true, meaning: "新的" },
+              { text: "電池", kana: "でんち", isKanji: true, meaning: "电池" },
+              { text: "の", kana: "の", isKanji: false },
+              { text: "技術", kana: "ぎじゅつ", isKanji: true, meaning: "技术" },
+              { text: "を", kana: "を", isKanji: false },
+              { text: "開発", kana: "かいはつ", isKanji: true, meaning: "开发" },
+              { text: "しました", kana: "しました", isKanji: false },
+              { text: "。", kana: "。", isKanji: false },
+              { text: "経済", kana: "けいざい", isKanji: true, meaning: "经济" },
+              { text: "への", kana: "への", isKanji: false },
+              { text: "影響", kana: "えいきょう", isKanji: true, meaning: "影响" },
+              { text: "も", kana: "も", isKanji: false },
+              { text: "大きい", kana: "おおきい", isKanji: true, meaning: "大的" },
+              { text: "見込み", kana: "みこみ", isKanji: true, meaning: "预估" },
+              { text: "です", kana: "です", isKanji: false },
+              { text: "。", kana: "。", isKanji: false }
+            ]
+          }
+        ];
+
+        const ROMAJI_MAP = {
+          a: "あ", i: "い", u: "う", e: "え", o: "お",
+          ka: "か", ki: "き", ku: "く", ke: "け", ko: "こ",
+          sa: "さ", si: "し", su: "す", se: "せ", so: "そ", shi: "し",
+          ta: "た", ti: "ち", tu: "つ", te: "て", to: "と", chi: "ち", tsu: "つ",
+          na: "な", ni: "に", nu: "ぬ", ne: "ね", no: "の",
+          ha: "は", hi: "ひ", fu: "ふ", he: "へ", ho: "ほ", hu: "ふ",
+          ma: "ま", mi: "み", mu: "む", me: "め", mo: "も",
+          ya: "や", yu: "ゆ", yo: "よ",
+          ra: "ら", ri: "り", ru: "る", re: "れ", ro: "ろ",
+          wa: "わ", wo: "を", nn: "ん", n: "ん",
+          ga: "が", gi: "ぎ", gu: "ぐ", ge: "げ", go: "ご",
+          za: "ざ", zi: "じ", zu: "ず", ze: "ぜ", zo: "ぞ", ji: "じ",
+          da: "だ", di: "ぢ", du: "づ", de: "で", do: "ど",
+          ba: "ば", bi: "び", bu: "ぶ", be: "べ", bo: "ぼ",
+          pa: "ぱ", pi: "ぴ", pu: "ぷ", pe: "ぺ", po: "ぽ",
+          kya: "きゃ", kyu: "きゅ", kyo: "きょ",
+          sha: "しゃ", shu: "しゅ", sho: "しょ", sya: "しゃ", syu: "しゅ", syo: "しょ",
+          cha: "ちゃ", chu: "ちゅ", cho: "ちょ", cya: "ちゃ", cyu: "ちゅ", cyo: "ちょ",
+          nya: "にゃ", nyu: "にゅ", nyo: "にょ",
+          hya: "ひゃ", hyu: "ひゃ", hyo: "ひょ",
+          mya: "みゃ", myu: "みゃ", myo: "みょ",
+          rya: "りゃ", ryu: "りゅ", ryo: "りょ",
+          gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
+          ja: "じゃ", ju: "じゅ", jo: "じょ", zya: "じゃ", zyu: "じゅ", zyo: "じょ",
+          bya: "びゃ", byu: "びゅ", byo: "びょ",
+          pya: "ぴゃ", pyu: "ぴゅ", pyo: "ぴょ"
+        };
+
+        function convertRomajiToKana(romaji) {
+          let buffer = romaji.toLowerCase();
+          let result = "";
+          while (buffer.length > 0) {
+            let matched = false;
+            for (let len = Math.min(3, buffer.length); len > 0; len--) {
+              const chunk = buffer.substring(0, len);
+              if (ROMAJI_MAP[chunk]) {
+                result += ROMAJI_MAP[chunk];
+                buffer = buffer.substring(len);
+                matched = true;
+                break;
+              }
+            }
+            if (!matched && buffer.length >= 2 && buffer[0] === buffer[1] && buffer[0] >= 'a' && buffer[0] <= 'z' && buffer[0] !== 'n') {
+              result += "っ";
+              buffer = buffer.substring(1);
+              matched = true;
+            }
+            if (!matched) break;
+          }
+          return { kana: result, remainder: buffer };
+        }
+
+        // ==========================================
+        // 2. 核心组件逻辑
+        // ==========================================
+        function JapaneseTypingTrainer() {
+          const [view, setView] = React.useState("practice");
+          const [challengeMode, setChallengeMode] = React.useState(false);
+          const [article, setArticle] = React.useState(SAMPLE_ARTICLES[0]);
+          const [recentArticles, setRecentArticles] = React.useState([]);
+          
+          const [currentElementIdx, setCurrentElementIdx] = React.useState(0);
+          const [typedKanaInElement, setTypedKanaInElement] = React.useState("");
+          const [inputBuffer, setInputBuffer] = React.useState("");
+          
+          const [startTime, setStartTime] = React.useState(null);
+          const [totalCorrectChars, setTotalCorrectChars] = React.useState(0);
+          const [mistakeCount, setMistakeCount] = React.useState(0);
+          const [wpm, setWpm] = React.useState(0);
+          const [accuracy, setAccuracy] = React.useState(100);
+
+          const [userData, setUserData] = React.useState({
+            completedArticles: [],
+            mistakeWords: [],
+            streakDays: 1,
+            totalChars: 0
+          });
+
+          const inputRef = React.useRef(null);
+
+          React.useEffect(() => {
+            const saved = localStorage.getItem("jp_typing_trainer_data");
+            if (saved) {
+              try { setUserData(JSON.parse(saved)); } catch (e) { console.error(e); }
+            }
+          }, []);
+
+          const saveUserData = (newData) => {
+            setUserData(newData);
+            localStorage.setItem("jp_typing_trainer_data", JSON.stringify(newData));
+          };
+
+          React.useEffect(() => {
+            if (!startTime || totalCorrectChars === 0) return;
+            const interval = setInterval(() => {
+              const elapsedMinutes = (Date.now() - startTime) / 60000;
+              if (elapsedMinutes > 0) {
+                setWpm(Math.round((totalCorrectChars / 5) / elapsedMinutes));
+              }
+              const totalAttempts = totalCorrectChars + mistakeCount;
+              setAccuracy(totalAttempts > 0 ? Math.round((totalCorrectChars / totalAttempts) * 100) : 100);
+            }, 1000);
+            return () => clearInterval(interval);
+          }, [startTime, totalCorrectChars, mistakeCount]);
+
+          const focusHiddenInput = () => {
+            if (inputRef.current) inputRef.current.focus();
+          };
+
+          React.useEffect(() => {
+            focusHiddenInput();
+          }, [currentElementIdx, view]);
+
+          const targetElement = article.elements[currentElementIdx];
+
+          const handleInputChange = (e) => {
+            if (!startTime) setStartTime(Date.now());
+            const value = e.target.value;
+            setInputBuffer(value);
+
+            const { kana, remainder } = convertRomajiToKana(value);
+
+            if (kana.length > 0) {
+              const nextKanaProgress = typedKanaInElement + kana;
+              const targetKana = targetElement.kana;
+
+              if (targetKana.startsWith(nextKanaProgress)) {
+                setTypedKanaInElement(nextKanaProgress);
+                setTotalCorrectChars(prev => prev + kana.length);
+                setInputBuffer(remainder);
+
+                if (nextKanaProgress === targetKana) {
+                  if (currentElementIdx < article.elements.length - 1) {
+                    setCurrentElementIdx(prev => prev + 1);
+                    setTypedKanaInElement("");
+                    setInputBuffer("");
+                  } else {
+                    handleArticleCompletion();
+                  }
+                }
+              } else {
+                setMistakeCount(prev => prev + 1);
+                if (targetElement.isKanji) {
+                  logMistake(targetElement.text, targetElement.kana, targetElement.meaning || "暂无释义");
+                }
+              }
+            }
+          };
+
+          const logMistake = (kanji, kana, meaning) => {
+            const list = [...userData.mistakeWords];
+            const existing = list.find(item => item.kanji === kanji);
+            if (existing) {
+              existing.count += 1;
+              existing.lastMistakeTime = Date.now();
+            } else {
+              list.push({ kanji, kana, meaning, count: 1, lastMistakeTime: Date.now(), level: article.level });
+            }
+            saveUserData({ ...userData, mistakeWords: list });
+          };
+
+          const handleArticleCompletion = () => {
+            const completed = [...userData.completedArticles, article.id];
+            const updatedRecent = [...recentArticles, article.id].slice(-20);
+            setRecentArticles(updatedRecent);
+            
+            saveUserData({
+              ...userData,
+              completedArticles: completed,
+              totalChars: userData.totalChars + totalCorrectChars
+            });
+
+            alert("🎉 恭喜您完成了整篇长文阅读与打字练习！");
+            resetTrainer();
+            switchRandomArticle();
+          };
+
+          const resetTrainer = () => {
+            setCurrentElementIdx(0);
+            setTypedKanaInElement("");
+            setInputBuffer("");
+            setStartTime(null);
+            setTotalCorrectChars(0);
+            setMistakeCount(0);
+            setWpm(0);
+            setAccuracy(100);
+          };
+
+          const switchRandomArticle = () => {
+            const available = SAMPLE_ARTICLES.filter(art => !recentArticles.includes(art.id));
+            const pool = available.length > 0 ? available : SAMPLE_ARTICLES;
+            const randomArt = pool[Math.floor(Math.random() * pool.length)];
+            setArticle(randomArt);
+            resetTrainer();
+          };
+
+          const startMistakeReview = (word) => {
+            const customArticle = {
+              id: `review_${Date.now()}`,
+              title: `针对性复习: ${word.kanji}`,
+              level: word.level,
+              category: "生活",
+              duration: 1,
+              translation: `专项强化错词：【${word.kanji}】。释义为：${word.meaning}。`,
+              elements: [
+                { text: "重点复习", kana: "ほんきふくしゅう", isKanji: false },
+                { text: "：", kana: "：", isKanji: false },
+                { text: word.kanji, kana: word.kana, isKanji: true, meaning: word.meaning },
+                { text: "の", kana: "の", isKanji: false },
+                { text: "練習", kana: "れんしゅう", isKanji: true, meaning: "练习" }
+              ]
+            };
+            setArticle(customArticle);
+            setView("practice");
+            resetTrainer();
+          };
+
+          return (
+            <div className="min-h-screen text-[#1E3A5F] font-sans antialiased transition-colors duration-200">
+              <header className="border-b border-[#E6E1D6] px-6 py-4 flex justify-between items-center max-w-5xl mx-auto">
+                <div className="flex items-center space-x-3">
+                  <span className="text-xl font-bold tracking-wide text-[#1E3A5F]">日本語縦横</span>
+                  <span className="text-xs px-2 py-0.5 bg-[#5A6B84]/10 text-[#5A6B84] rounded-full">文库阅读版</span>
+                </div>
+                <nav className="flex space-x-4">
+                  <button onClick={() => setView("practice")} className={`px-4 py-1.5 text-sm rounded-md transition-all ${view === "practice" ? "bg-[#1E3A5F] text-white shadow-sm" : "text-[#5A6B84] hover:text-[#1E3A5F]"}`}>长文练习</button>
+                  <button onClick={() => setView("mistakes")} className={`px-4 py-1.5 text-sm rounded-md transition-all ${view === "mistakes" ? "bg-[#1E3A5F] text-white shadow-sm" : "text-[#5A6B84] hover:text-[#1E3A5F]"}`}>易错词本 ({userData.mistakeWords.length})</button>
+                </nav>
+              </header>
+
+              <main className="max-w-4xl mx-auto px-4 py-8 md:py-12" onClick={focusHiddenInput}>
+                {view === "practice" ? (
+                  <div>
+                    <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#E6E1D6] pb-4">
+                      <div>
+                        <h1 className="text-2xl font-semibold tracking-tight text-[#1E3A5F] mb-2">{article.title}</h1>
+                        <div className="flex items-center space-x-3 text-xs text-[#5A6B84]">
+                          <span className="px-2 py-0.5 bg-[#1E3A5F]/5 rounded text-[#1E3A5F] font-medium">{article.level}</span>
+                          <span>•</span><span>分类: {article.category}</span><span>•</span><span>预计时间: {article.duration} 分钟</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button onClick={(e) => { e.stopPropagation(); setChallengeMode(!challengeMode); }} className={`text-xs px-3 py-1.5 rounded border transition-colors ${challengeMode ? "bg-[#C65D5D]/10 border-[#C65D5D] text-[#C65D5D]" : "bg-white border-[#E6E1D6] text-[#5A6B84]"}`}>{challengeMode ? "挑战模式 (隐翻译)" : "学习模式 (显翻译)"}</button>
+                        <button onClick={(e) => { e.stopPropagation(); switchRandomArticle(); }} className="text-xs px-3 py-1.5 bg-white border border-[#E6E1D6] rounded text-[#1E3A5F] hover:bg-white/60">换一波长文 ↻</button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-2 md:gap-4 mb-8 bg-white/60 backdrop-blur p-4 rounded-xl shadow-sm border border-[#E6E1D6]/60 text-center">
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">WPM</p><p className="text-lg md:text-xl font-bold font-mono">{wpm}</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">正确字</p><p className="text-lg md:text-xl font-bold font-mono text-emerald-700">{totalCorrectChars}</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">正确率</p><p className="text-lg md:text-xl font-bold font-mono">{accuracy}%</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">轻误击</p><p className="text-lg md:text-xl font-bold font-mono text-[#C65D5D]">{mistakeCount}</p></div>
+                      <div><p className="text-xs text-[#5A6B84] uppercase tracking-wider mb-1">连续天数</p><p className="text-lg md:text-xl font-bold font-mono text-amber-700">{userData.streakDays}天</p></div>
+                    </div>
+
+                    <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-[#E6E1D6] leading-relaxed mb-8 select-none relative">
+                      <input ref={inputRef} type="text" value={inputBuffer} onChange={handleInputChange} className="absolute opacity-0 pointer-events-none inset-0 w-full h-full z-0 cursor-default" autoComplete="off" autoCapitalize="off" spellCheck="false" autoCorrect="off" />
+                      <div className="text-xl md:text-2xl tracking-widest text-[#1E3A5F] z-10 relative flex flex-wrap content-start items-center gap-y-6">
+                        {article.elements.map((el, idx) => {
+                          let colorClass = "text-gray-400";
+                          if (idx < currentElementIdx) colorClass = "text-emerald-600 font-medium";
+                          else if (idx === currentElementIdx) colorClass = "text-[#1E3A5F] bg-blue-50 border-b-2 border-[#1E3A5F] font-bold";
+                          return (
+                            <span key={idx} className={`inline-block px-0.5 rounded transition-all duration-150 ${colorClass}`}>
+                              <ruby>
+                                {el.text}
+                                <rt className="text-xs tracking-normal font-normal text-[#5A6B84] select-none pb-1">{el.kana}</rt>
+                              </ruby>
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-8 pt-4 border-t border-[#F8F6F1] flex items-center justify-between text-sm text-[#5A6B84]">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-2 h-2 rounded-full bg-[#1E3A5F] animate-pulse" />
+                          <span>当前目标假名: <span className="font-bold font-mono text-[#1E3A5F]">{targetElement?.kana}</span></span>
+                        </div>
+                        {inputBuffer && (
+                          <div className="bg-[#F8F6F1] px-3 py-1 rounded font-mono text-xs">正在缓冲输入: <span className="text-[#C65D5D] font-bold">{inputBuffer}</span></div>
+                        )}
+                      </div>
+                    </div>
+
+                    {!challengeMode && (
+                      <div className="bg-[#5A6B84]/5 p-5 rounded-xl border border-[#E6E1D6]/40 text-sm leading-relaxed text-[#5A6B84]">
+                        <p className="font-semibold text-xs uppercase tracking-wider mb-2 text-[#1E3A5F]/70">✍️ 中文译文对照</p>
+                        {article.translation}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-[#E6E1D6]">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <h2 className="text-xl font-bold text-[#1E3A5F]">本地个人弱点词库</h2>
+                        <p className="text-xs text-[#5A6B84] mt-1">系统会自动追踪打字时识别不准或假名拼错的汉字。</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-[#5A6B84]">总累计练习量</span>
+                        <p className="text-lg font-bold font-mono text-[#1E3A5F]">{userData.totalChars} 字</p>
+                      </div>
+                    </div>
+
+                    {userData.mistakeWords.length === 0 ? (
+                      <div className="text-center py-16 border-2 border-dashed border-[#E6E1D6] rounded-xl text-[#5A6B84]">🌲 目前还没有错词记录。</div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm border-collapse">
+                          <thead>
+                            <tr className="border-b border-[#E6E1D6] text-[#5A6B84] text-xs uppercase">
+                              <th className="py-3 px-4">汉字</th>
+                              <th className="py-3 px-4">标准读音</th>
+                              <th className="py-3 px-4">对应释义</th>
+                              <th className="py-3 px-4 text-center">错击频次</th>
+                              <th className="py-3 px-4 text-right">专项突击</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {userData.mistakeWords.sort((a, b) => b.count - a.count).map((word, i) => (
+                              <tr key={i} className="border-b border-[#F8F6F1] hover:bg-[#F8F6F1]/50 transition-colors">
+                                <td className="py-3 px-4 font-bold text-[#1E3A5F] text-base">{word.kanji}</td>
+                                <td className="py-3 px-4 text-[#5A6B84] font-mono">{word.kana}</td>
+                                <td className="py-3 px-4 text-xs text-gray-600">{word.meaning}</td>
+                                <td className="py-3 px-4 text-center"><span className="px-2 py-0.5 bg-[#C65D5D]/10 text-[#C65D5D] rounded-full text-xs font-bold font-mono">{word.count} 次</span></td>
+                                <td className="py-3 px-4 text-right"><button onClick={() => startMistakeReview(word)} className="text-xs bg-[#1E3A5F] text-white px-3 py-1 rounded hover:bg-[#1E3A5F]/90 transition-all">强化消灭</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </main>
+              <footer className="max-w-4xl mx-auto text-center py-8 text-xs text-[#5A6B84]/50 border-t border-[#E6E1D6]/40 mt-12">采用 LocalStorage 进行完全去中心化无痕学习</footer>
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<JapaneseTypingTrainer />);
+    </script>
+</body>
+</html>
