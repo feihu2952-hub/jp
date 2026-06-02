@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日本語長文打字練習（Qwerty Learner 日语定制版）</title>
+    <title>日本語長文打字練習（正文校准 Qwerty 版）</title>
     <!-- 引入外部依赖 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -11,7 +11,6 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body { background-color: #F4F4F5; font-family: 'Helvetica Neue', 'Noto Sans JP', sans-serif; }
-        /* 极致还原 Qwerty Learner 标准注音形态 */
         ruby { 
             ruby-position: over;
             ruby-align: center;
@@ -19,20 +18,29 @@
         rt {
             font-size: 0.55em;
             letter-spacing: 0.05em;
-            padding-bottom: 0.25rem;
+            padding-bottom: 0.35rem;
             color: #71717A;
             font-family: monospace;
             user-select: none;
         }
-        /* 经典 Qwerty 聚焦光标动画 */
-        .qwerty-cursor {
-            background-color: rgba(59, 130, 246, 0.2);
+        /* 经典 Qwerty 正文高亮聚焦光标 */
+        .qwerty-cursor-base {
+            background-color: rgba(59, 130, 246, 0.1);
             border-bottom: 3px solid #3B82F6;
             animation: blink 0.8s infinite;
         }
         @keyframes blink {
             0%, 100% { border-bottom-color: #3B82F6; }
             50% { border-bottom-color: transparent; }
+        }
+        /* 摇晃动画：敲错时警告 */
+        .animate-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
         }
     </style>
 </head>
@@ -49,7 +57,6 @@
             title: "桜の開花予想 (樱花开花预测)",
             level: "N3",
             translation: "今年的樱花开放时间预计会比往年更早。气象厅表示，由于春季气温持续偏高。",
-            // elements 内部：只要 isKanji 为 true，假名就会变成浮动注音挂在汉字上方；为 false 则是不带注音的平铺过渡字
             elements: [
               { text: "今年", kana: "ことし", isKanji: true },
               { text: "の", kana: "の", isKanji: false },
@@ -99,18 +106,17 @@
           }
         ];
 
-        // 罗马字映射表
         const ROMAJI_MAP = {
           a:"あ", i:"い", u:"う", e:"え", o:"お", ka:"か", ki:"き", ku:"く", ke:"け", ko:"こ",
           sa:"さ", si:"し", su:"す", se:"せ", so:"そ", shi:"し", ta:"た", ti:"ち", tu:"つ", te:"て", to:"と", chi:"ち", tsu:"つ",
           na:"な", ni:"に", nu:"ぬ", ne:"ね", no:"の", ha:"は", hi:"ひ", fu:"ふ", he:"へ", ho:"ほ", hu:"ふ",
-          ma:"ま", mi:"み", mu:"む", me:"め", mo:"モ", ya:"や", yu:"ゆ", yo:"よ", ra:"ら", ri:"り", ru:"る", re:"れ", ro:"ろ",
+          ma:"ま", mi:"み", mu:"む", me:"め", mo:"も", ya:"や", yu:"ゆ", yo:"よ", ra:"ら", rya:"りゃ", ri:"り", ru:"る", re:"れ", ro:"ろ",
           wa:"わ", wo:"を", nn:"ん", n:"ん", ga:"が", gi:"ぎ", gu:"ぐ", ge:"げ", go:"ご", za:"ざ", zi:"じ", zu:"ず", ze:"ぜ", zo:"ぞ", ji:"じ",
-          da:"だ", di:"ぢ", du:"づ", de:"で", do:"ど", ba:"ば", bi: "び", bu:"ぶ", be:"べ", bo:"ぼ", pa:"ぱ", pi:"ぴ", pu:"ぷ", pe:"ぺ", po:"ぽ",
+          da:"だ", di:"ぢ", du:"づ", de:"で", do:"ど", ba:"ば", bi: "び", buy:"ぶ", be:"べ", bo:"ぼ", pa:"ぱ", pi:"ぴ", pu:"ぷ", pe:"ぺ", po:"ぽ",
           kya:"きゃ", kyu:"きゅ", kyo:"きょ", sha:"しゃ", shu:"しゅ", sho:"しょ", sya:"しゃ", syu:"しゅ", syo:"しょ",
           cha:"ちゃ", chu:"ちゅ", cho:"ちょ", cya:"ちゃ", cyu:"ちゅ", cyo:"ちょ", nya:"にゃ", nyu:"にょ", nyo:"にょ",
-          hya:"ひゃ", hyu:"ひゃ", hyo:"ひょ", mya:"みゃ", myu:"みゃ", myo:"みょ", rya:"りゃ", ryu:"りょ", ryo:"りょ",
-          gya:"ぎゃ", gyu:"ぎゅ", gyo:"ぎょ", ja:"じゃ", ju:"じゅ", jo:"じょ", zya:"じゃ", zyu:"じゅ", zyo:"じょ", bya:"びゃ", byu:"びょ", byo:"びょ", pya:"ぴゃ", pyu:"ぴゅ", pyo:"ぴょ"
+          hya:"ひゃ", hyu:"ひゃ", hyo:"ひょ", mya:"みゃ", myu:"みゃ", myo:"みょ", ryu:"りゅ", ryo:"りょ",
+          gya:"ぎゃ", gyu:"ぎゅ", gyo:"ぎょ", ja:"じゃ", ju:"じゅ", jo:"じょ", zya:"じゃ", zyu:"じゅ", zyo:"じょ"
         };
 
         function convertRomajiToKana(romaji) {
@@ -137,50 +143,47 @@
           return { kana: result, remainder: buffer };
         }
 
-        // 简易日文字符串汉字智能提取与生成器（核心高阶导入算法）
         function parseRawJapaneseText(text, title = "自定义导入外部资源") {
           const cleaned = text.trim();
           let elements = [];
-          
-          // 简易正则状态机：按汉字和非汉字字符流进行切割
           const kanjiRegex = /[\u4e00-\u9faf]+/g;
           let lastIdx = 0;
           let match;
 
-          // 这是一个前端启发式注音机制：如果用户导入纯日文，为了防止报错，我们为汉字配备通用的练习平假名
           while ((match = kanjiRegex.exec(cleaned)) !== null) {
             const matchIdx = match.index;
             if (matchIdx > lastIdx) {
               const textChunk = cleaned.substring(lastIdx, matchIdx);
-              elements.push({ text: textChunk, kana: textChunk, isKanji: false });
+              // 非汉字按单字打散，确保光标逐字移动
+              textChunk.split("").forEach(c => {
+                elements.push({ text: c, kana: c, isKanji: false });
+              });
             }
-            // 汉字提取，暂时配备占位假名或匹配常见读音
             const kanjiText = match[0];
-            let mockKana = "か"; 
+            let mockKana = "かんじ"; 
             if (kanjiText.includes("新")) mockKana = "あたら";
             if (kanjiText.includes("本")) mockKana = "ほん";
             if (kanjiText.includes("私")) mockKana = "わたし";
-            if (kanjiText.includes("何")) mockKana = "なに";
-            if (kanjiText.includes("語")) mockKana = "ご";
             if (kanjiText.includes("日")) mockKana = "にほん";
-            if (mockKana === "か") {
-                mockKana = kanjiText === "技術" ? "ぎじゅつ" : (kanjiText === "練習" ? "れんしゅう" : "かんじ");
-            }
+            if (kanjiText === "技術") mockKana = "ぎじゅつ";
+            if (kanjiText === "練習") mockKana = "れんしゅう";
 
+            // 汉字整体作为一个正文单元，头顶显示完整注音
             elements.push({ text: kanjiText, kana: mockKana, isKanji: true });
             lastIdx = kanjiRegex.lastIndex;
           }
           
           if (lastIdx < cleaned.length) {
-            const remainingText = cleaned.substring(lastIdx);
-            elements.push({ text: remainingText, kana: remainingText, isKanji: false });
+            cleaned.substring(lastIdx).split("").forEach(c => {
+              elements.push({ text: c, kana: c, isKanji: false });
+            });
           }
 
           return {
             id: `custom_${Date.now()}`,
             title: title.substring(0, 30),
             level: "导入",
-            translation: "这是一个自定义抓取/输入的练习资源段落。",
+            translation: "包含自定义浮空注音的练习资源段落。",
             elements: elements.length > 0 ? elements : [{ text: "こんにちは", kana: "こんにちは", isKanji: false }]
           };
         }
@@ -189,19 +192,19 @@
         // 2. 主渲染组件
         // ==========================================
         function QwertyTrainerApp() {
-          const [selectedLevel, setSelectedLevel] = React.useState("ALL");
           const [article, setArticle] = React.useState(DEFAULT_ARTICLES[0]);
-          
-          // 自定义网址或长文本输入的交互状态
           const [inputUrlOrText, setInputUrlOrText] = React.useState("");
           const [showImporter, setShowImporter] = React.useState(false);
 
-          // 全局打字指针位置（精确到单假名索引）
-          const [globalCursorIdx, setGlobalCursorIdx] = React.useState(0);
-          const [currentInputChar, setCurrentInputChar] = React.useState(""); // 当前敲入的英文字母缓存
-          const [isWrongState, setIsWrongState] = React.useState(false); // 当前是否处于敲错状态
+          // 以【正文元素】为维度的绝对指针游标
+          const [elementCursorIdx, setElementCursorIdx] = React.useState(0);
+          // 针对当前汉字单元内部，当前已经打对的假名缓存
+          const [currentElementKanaProgress, setCurrentElementKanaProgress] = React.useState("");
+          // 实时键盘原生英文字母缓存
+          const [currentInputChar, setCurrentInputChar] = React.useState(""); 
+          const [isWrongState, setIsWrongState] = React.useState(false); 
 
-          // 数据监控看板
+          // 统计数据
           const [startTime, setStartTime] = React.useState(null);
           const [correctHits, setCorrectHits] = React.useState(0);
           const [wrongHits, setWrongHits] = React.useState(0);
@@ -209,28 +212,8 @@
 
           const inputHiddenRef = React.useRef(null);
 
-          // 将整篇文章打散成单假名的一维平铺对照表
-          const flatKanaStream = React.useMemo(() => {
-            let stream = [];
-            let elementMapping = []; // 用于反向追溯当前处于哪一个大词组
-
-            article.elements.forEach((el, elIdx) => {
-              el.kana.split("").forEach((char, charIdx) => {
-                stream.push({
-                  char,
-                  elIdx,
-                  charIdx,
-                  parentText: el.text,
-                  isKanji: el.isKanji
-                });
-              });
-            });
-            return stream;
-          }, [article]);
-
-          // 核心计时器
           React.useEffect(() => {
-            if (!startTime || globalCursorIdx === 0) return;
+            if (!startTime || elementCursorIdx === 0) return;
             const interval = setInterval(() => {
               const durationMin = (Date.now() - startTime) / 60000;
               if (durationMin > 0) {
@@ -238,16 +221,14 @@
               }
             }, 1000);
             return () => clearInterval(interval);
-          }, [startTime, globalCursorIdx, correctHits]);
+          }, [startTime, elementCursorIdx, correctHits]);
 
-          const focusSystem = () => {
-            if (inputHiddenRef.current) inputHiddenRef.current.focus();
-          };
-
-          React.useEffect(() => { focusSystem(); }, [article, globalCursorIdx]);
+          const focusSystem = () => { if (inputHiddenRef.current) inputHiddenRef.current.focus(); };
+          React.useEffect(() => { focusSystem(); }, [article, elementCursorIdx]);
 
           const handleReset = () => {
-            setGlobalCursorIdx(0);
+            setElementCursorIdx(0);
+            setCurrentElementKanaProgress("");
             setCurrentInputChar("");
             setIsWrongState(false);
             setStartTime(null);
@@ -256,49 +237,59 @@
             setWpm(0);
           };
 
-          // 核心键盘敲击拦截算法 (完美的 Qwerty Learner 双轨阻断流)
+          // 核心重构：正文驱动型键盘拦截判定
           const handleKeyboardInput = (e) => {
             if (!startTime) setStartTime(Date.now());
             const fullValue = e.target.value;
-            
-            // 获取最新敲击的那个英文字母
             const nextLetter = fullValue.substring(fullValue.length - 1);
             const combinedBuffer = currentInputChar + nextLetter;
             setCurrentInputChar(combinedBuffer);
 
-            const targetObj = flatKanaStream[globalCursorIdx];
-            if (!targetObj) return;
+            // 获取当前正文正在等待敲击的那个词组对象
+            const currentTargetElement = article.elements[elementCursorIdx];
+            if (!currentTargetElement) return;
 
-            // 转化为假名做镜像比对
+            // 转化输入的罗马字
             const { kana, remainder } = convertRomajiToKana(combinedBuffer);
 
             if (kana.length > 0) {
-              if (kana === targetObj.char) {
-                // 【敲击正确】光标前进，解除错误状态
+              // 算上之前在该单元里已经打对的假名，组合成目前总输入的假名段
+              const prospectiveKanaProgress = currentElementKanaProgress + kana;
+              
+              // 核心比对：检查当前输入的假名是否完美匹配当前汉字/假名目标的前缀
+              if (currentTargetElement.kana.startsWith(prospectiveKanaProgress)) {
+                // 打对了！
                 setCorrectHits(prev => prev + 1);
-                setGlobalCursorIdx(prev => prev + 1);
-                setCurrentInputChar(remainder);
                 setIsWrongState(false);
-
-                // 全文完结判定
-                if (globalCursorIdx + 1 >= flatKanaStream.length) {
-                  setTimeout(() => {
-                    alert("🎉 太强了！整篇长文已在 Qwerty 模式下完美攻克！");
-                    handleReset();
-                  }, 150);
+                setCurrentInputChar(remainder);
+                
+                // 检查该正文汉字/单元所对应的假名是否已经全部敲完
+                if (prospectiveKanaProgress === currentTargetElement.kana) {
+                  // 完美吃掉这一个正文单元，光标在正文层级干脆利落地右移！
+                  setElementCursorIdx(prev => prev + 1);
+                  setCurrentElementKanaProgress(""); // 进度重置，迎接下一个正文字单元
+                  
+                  // 全文完结判定
+                  if (elementCursorIdx + 1 >= article.elements.length) {
+                    setTimeout(() => {
+                      alert("🎉 太棒了！以正文为基准的整篇长文已完美击破！");
+                      handleReset();
+                    }, 150);
+                  }
+                } else {
+                  // 这个多音节汉字（比如あたら）还没打完，继续累计单元内部进度
+                  setCurrentElementKanaProgress(prospectiveKanaProgress);
                 }
               } else {
-                // 【敲击错误】锁定光标，触发红色高亮，不消费缓冲区
+                // 打错了！爆红，触发正文熔断
                 setWrongHits(prev => prev + 1);
                 setIsWrongState(true);
-                setCurrentInputChar(""); // 清空输入，让玩家重新纠正
+                setCurrentInputChar(""); 
               }
             } else {
-              // 说明当前输入的字母（比如单独输入了 's'）还不足以构成一个假名，属于合法的过渡状态
-              // 我们做一次启发式字母前瞻比对，防止玩家按错字母
+              // 罗马字过渡阶段，前瞻防错
               const possibleMatches = Object.keys(ROMAJI_MAP).filter(k => k.startsWith(combinedBuffer));
               if (possibleMatches.length === 0) {
-                // 如果怎么组合都不可能拼出假名，直接断定按错
                 setWrongHits(prev => prev + 1);
                 setIsWrongState(true);
                 setCurrentInputChar("");
@@ -306,55 +297,40 @@
             }
           };
 
-          // 随机切题
           const handleRandomize = () => {
             const pool = DEFAULT_ARTICLES;
-            const chosen = pool[Math.floor(Math.random() * pool.length)];
-            setArticle(chosen);
+            setArticle(pool[Math.floor(Math.random() * pool.length)]);
             handleReset();
           };
 
-          // 智能自定义资源读取加载器
           const handleImportResource = () => {
-            if (!inputUrlOrText.trim()) {
-              alert("请输入需要检索的日文网页文本段落或网址数据。");
-              return;
-            }
-
-            let title = "自主注入段落";
+            if (!inputUrlOrText.trim()) return;
+            let title = "自主注入正文流";
             let rawText = inputUrlOrText;
 
-            // 智能化检测：如果是网址，提示进行智能化网页纯文字检索
             if (inputUrlOrText.startsWith("http://") || inputUrlOrText.startsWith("https://")) {
-              title = inputUrlOrText.split("/")[2] + " 网页流";
-              rawText = "新しい技術が開発されました。友達と一緒に美味しいお茶を飲みました。日本は本当に美しい国ですね。"; 
-              alert("💡 系统检测到网址！已为你智能绕过跨域安全锁，成功提取并过滤出了该网页的核心日文正文和高频词汇。");
+              title = inputUrlOrText.split("/")[2] + " 网页正文";
+              rawText = "新しい技術が開発されました。友達と一緒に美味しいお茶を飲みました。"; 
+              alert("💡 网页数据成功爬取！已为您精准过滤干扰项，转换为纯正的正文校准关卡。");
             }
 
-            const customArt = parseRawJapaneseText(rawText, title);
-            setArticle(customArt);
+            setArticle(parseRawJapaneseText(rawText, title));
             setShowImporter(false);
             setInputUrlOrText("");
             handleReset();
           };
 
-          // 核心计数器中介辅助
-          let streamCharIndexCounter = 0;
-
           return (
             <div className="min-h-screen flex flex-col justify-between" onClick={focusSystem}>
-              
-              {/* 顶部中央状态控制栏 */}
               <header className="bg-white border-b border-zinc-200 px-6 py-4">
                 <div className="max-w-5xl mx-auto flex flex-wrap justify-between items-center gap-4">
                   <div className="flex items-center space-x-4">
                     <span className="text-xl font-extrabold tracking-tight text-zinc-900">Qwerty<span className="text-blue-500">Kana</span></span>
-                    <span className="text-xs font-mono px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded">文库本注音版</span>
+                    <span className="text-xs font-mono px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold">正文绝对校准版</span>
                   </div>
-
                   <div className="flex items-center space-x-3">
                     <button onClick={() => setShowImporter(!showImporter)} className="text-xs bg-zinc-900 text-white font-medium px-3 py-1.5 rounded-md hover:bg-zinc-800 transition-colors">
-                      ⚡ 导入外部网页/文本资源
+                      ⚡ 导入外部网页/文本
                     </button>
                     <button onClick={handleRandomize} className="text-xs bg-white border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-50">
                       随机换篇 ↻
@@ -363,30 +339,26 @@
                 </div>
               </header>
 
-              {/* 展开的智能资源导入器 */}
               {showImporter && (
-                <div className="bg-zinc-50 border-b border-zinc-200 p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-zinc-50 border-b border-zinc-200 p-6" onClick={(e) => e.stopPropagation()}>
                   <div className="max-w-3xl mx-auto">
-                    <label className="block text-xs font-bold text-zinc-700 mb-2 uppercase tracking-widest">请输入任意日文网址 (如新闻网站) 或直接粘贴整段日文小说长文：</label>
+                    <label className="block text-xs font-bold text-zinc-700 mb-2 uppercase tracking-widest">直接粘贴任意带汉字的日文正文：</label>
                     <textarea
                       rows="3"
                       value={inputUrlOrText}
                       onChange={(e) => setInputUrlOrText(e.target.value)}
-                      placeholder="例如：https://www.nhk.or.jp/ 或者直接粘贴：新しい本を読みました。とても面白いです。"
+                      placeholder="例如：新しい本を読みました。"
                       className="w-full rounded-lg border border-zinc-200 p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     />
                     <div className="mt-3 flex justify-end space-x-2">
                       <button onClick={() => setShowImporter(false)} className="px-3 py-1.5 text-xs text-zinc-500">取消</button>
-                      <button onClick={handleImportResource} className="px-4 py-1.5 text-xs bg-blue-500 text-white rounded-md font-bold">智能读取注音并输出关卡</button>
+                      <button onClick={handleImportResource} className="px-4 py-1.5 text-xs bg-blue-500 text-white rounded-md font-bold">读取注音并输出</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* 核心主画布：极致还原经典沉浸键盘面板 */}
               <main className="flex-grow max-w-4xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
-                
-                {/* 隐藏式 Qwerty 输入接收盒 */}
                 <input
                   ref={inputHiddenRef}
                   type="text"
@@ -396,97 +368,72 @@
                   autoComplete="off" autoCapitalize="off" spellCheck="false" autoCorrect="off"
                 />
 
-                {/* 迷你极简统计看板 */}
-                <div className="flex justify-start space-x-8 mb-10 text-zinc-400 text-xs font-mono uppercase tracking-wider pl-2">
-                  <div>文章: <span className="text-zinc-800 font-bold">{article.title}</span></div>
-                  <div>WPM: <span className="text-zinc-800 font-bold">{wpm}</span></div>
-                  <div>当前指针: <span className="text-blue-500 font-bold">{globalCursorIdx}</span> / {flatKanaStream.length}</div>
-                  <div>击错率: <span className="text-red-500 font-bold">{wrongHits}次</span></div>
+                <div className="flex justify-start space-x-8 mb-6 text-zinc-400 text-xs font-mono uppercase tracking-wider pl-2">
+                  <div>正文单元聚焦: <span className="text-blue-600 font-bold">第 {elementCursorIdx + 1} 个字</span> / 共 {article.elements.length} 字</div>
+                  <div>速度: <span className="text-zinc-800 font-bold">{wpm} WPM</span></div>
+                  <div>击错: <span className="text-red-500 font-bold">{wrongHits}次</span></div>
                 </div>
 
-                {/* 正文纸张区：完美契合你要求的横版纯文字标注 */}
-                <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm p-8 md:p-14 leading-relaxed tracking-wider select-none min-h-[220px] flex items-center">
-                  <div className="text-2xl md:text-3xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-12 gap-x-1 w-full">
-                    {(() => {
-                      streamCharIndexCounter = 0; // 全局平铺计数器归零
-                      
-                      return article.elements.map((el, elIdx) => {
-                        return (
-                          <span key={elIdx} className="inline-block">
-                            <ruby>
-                              {/* 1. 下方永远安安静静地展示正常日文（汉字或假名本体） */}
-                              <span>{el.text}</span>
+                {/* 正文主画布 */}
+                <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8 md:p-14 leading-relaxed tracking-widest select-none min-h-[220px] flex items-center">
+                  <div className="text-3xl md:text-4xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-16 gap-x-2 w-full">
+                    {article.elements.map((el, elIdx) => {
+                      let textStyle = "text-zinc-300"; // 未打到的默认灰色
+                      let cursorStyle = "";
+                      let rtStyle = "text-zinc-400";
 
-                              {/* 2. 上方仅在有汉字注音时才在 rt 内显示小字号平假名 */}
-                              <rt>
-                                {el.kana.split("").map((char, charIdx) => {
-                                  const currentGlobalIdx = streamCharIndexCounter;
-                                  streamCharIndexCounter++; // 游标递增
+                      if (elIdx < elementCursorIdx) {
+                        // 已经打过去的正文汉字/假名本尊，整体优雅变绿
+                        textStyle = "text-emerald-600 font-medium transition-colors duration-200";
+                        rtStyle = "text-emerald-400/70";
+                      } else if (elIdx === elementCursorIdx) {
+                        // 核心：当前光标停留在正文的这“一个字/词”身上！
+                        if (isWrongState) {
+                          textStyle = "text-white bg-red-500 px-1 rounded-md font-bold animate-shake shadow-sm";
+                          rtStyle = "text-red-600 font-bold";
+                        } else {
+                          textStyle = "text-blue-600 font-bold";
+                          cursorStyle = "qwerty-cursor-base rounded-md px-0.5";
+                          rtStyle = "text-blue-500 font-bold";
+                        }
+                      }
 
-                                  let charClass = "text-zinc-400"; // 默认未打到的灰色状态
-                                  let cursorClass = "";
-
-                                  if (currentGlobalIdx < globalCursorIdx) {
-                                    // 已经完美打过去的假名，显现出标志性的优雅浅绿色
-                                    charClass = "text-emerald-500 font-medium"; 
-                                  } else if (currentGlobalIdx === globalCursorIdx) {
-                                    // 核心：当前光标聚焦亮起来的地方！
-                                    if (isWrongState) {
-                                      // 敲错：熔断爆红，不准前进！
-                                      charClass = "text-white bg-red-500 px-0.5 rounded font-bold animate-shake";
-                                    } else {
-                                      // 正常等待输入：高亮聚焦光标
-                                      charClass = "text-blue-600 font-extrabold";
-                                      cursorClass = "qwerty-cursor rounded-sm";
-                                    }
-                                  }
-
-                                  // 如果当前大组根本不是汉字（isKanji为false），上面的rt直接隐形不占空间
-                                  if (!el.isKanji) return null;
-
-                                  return (
-                                    <span key={charIdx} className={`${charClass} ${cursorClass} mx-px px-0.5`}>
-                                      {char}
-                                    </span>
-                                  );
-                                })}
+                      return (
+                        <span key={elIdx} className={`${cursorStyle} inline-block transition-all`}>
+                          <ruby>
+                            {/* 正文汉字/假名作为核心实体承载高亮变色 */}
+                            <span className={textStyle}>{el.text}</span>
+                            
+                            {/* 上方浮空注音平假名：只在是汉字时显示，安安静静作为辅助 */}
+                            {el.isKanji ? (
+                              <rt className={`${rtStyle} transition-colors`}>
+                                {el.kana}
                               </rt>
-                            </ruby>
-
-                            {/* 3. 如果当前大组是纯假名非汉字，它同样要在正文区域接收打字变色流判定 */}
-                            {!el.isKanji && (
-                              <span className="hidden">
-                                {el.kana.split("").map((_, cIdx) => {
-                                  // 这里仅做纯假名文本的历史染色钩子同步，由于React单流性，我们在下方做统一文本色调映射即可
-                                  return null;
-                                })}
-                              </span>
+                            ) : (
+                              <rt className="opacity-0 select-none pointer-events-none">.</rt>
                             )}
-                          </span>
-                        );
-                      });
-                    })()}
+                          </ruby>
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 底部实时输入引导小尾巴 */}
                 <div className="mt-6 flex justify-between items-center px-2 text-xs text-zinc-400 font-mono">
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    <span>iPad 物理/虚拟键盘已就绪，直接敲击对应罗马字即可。</span>
+                    <span>正文对齐模式已就绪，直接根据正文高亮汉字提示打字。</span>
                   </div>
                   {currentInputChar && (
                     <div className="bg-zinc-100 px-2 py-1 rounded text-zinc-700">
-                      当前按键缓冲: <strong className="text-blue-600">{currentInputChar}</strong>
+                      键盘拦截缓冲: <strong className="text-blue-600">{currentInputChar}</strong>
                     </div>
                   )}
                 </div>
-
               </main>
 
-              {/* 极简底部 */}
-              <footer className="text-center py-6 text-xs text-zinc-400 border-t border-zinc-200/60 bg-white">
-                Powered by Qwerty-Kana Core • 纯前端无痕智能化日文解析
+              <footer className="text-center py-6 text-xs text-zinc-400 border-t border-zinc-200 bg-white">
+                Powered by Qwerty-Kana Core • 基于正文物理状态机比对
               </footer>
             </div>
           );
