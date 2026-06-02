@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日本語長文打字練習（正文校准 Qwerty 版）</title>
-    <!-- 引入外部依赖 -->
+    <title>日本語長文精読本（AI 单词文法解析版）</title>
+    <!-- 引入 Tailwind CSS 强力视觉库 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        body { background-color: #F4F4F5; font-family: 'Helvetica Neue', 'Noto Sans JP', sans-serif; }
+        body { background-color: #F4F4F5; font-family: 'Helvetica Neue', 'Noto Sans JP', 'PingFang SC', sans-serif; }
+        /* 延续最纯正的横版文库本注音排版 */
         ruby { 
             ruby-position: over;
             ruby-align: center;
@@ -23,25 +24,25 @@
             font-family: monospace;
             user-select: none;
         }
-        /* 经典 Qwerty 正文高亮聚焦光标 */
-        .qwerty-cursor-base {
-            background-color: rgba(59, 130, 246, 0.1);
-            border-bottom: 3px solid #3B82F6;
-            animation: blink 0.8s infinite;
+        /* 可点击单词的优雅虚线下划线 */
+        .grammar-word {
+            border-bottom: 2px dashed #3B82F6;
+            cursor: pointer;
+            padding-bottom: 1px;
+            transition: all 0.2s ease;
         }
-        @keyframes blink {
-            0%, 100% { border-bottom-color: #3B82F6; }
-            50% { border-bottom-color: transparent; }
+        .grammar-word:hover {
+            color: #3B82F6;
+            background-color: rgba(59, 130, 246, 0.05);
         }
-        /* 摇晃动画：敲错时警告 */
-        .animate-shake {
-            animation: shake 0.2s ease-in-out 0s 2;
+        /* 抽屉式解析卡片动画 */
+        .analysis-card {
+            animation: slideDown 0.25s ease-out;
         }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-3px); }
-            75% { transform: translateX(3px); }
-        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
     </style>
 </head>
 <body>
@@ -49,366 +50,193 @@
 
     <script type="text/babel">
         // ==========================================
-        // 1. 标准经典内置文章库 (严格按汉字、假名分离结构设计)
+        // 1. 模拟全网真实版权过滤长文库（分难度、带AI内嵌解析）
         // ==========================================
-        const DEFAULT_ARTICLES = [
-          {
-            id: "art_001",
-            title: "桜の開花予想 (樱花开花预测)",
-            level: "N3",
-            translation: "今年的樱花开放时间预计会比往年更早。气象厅表示，由于春季气温持续偏高。",
-            elements: [
-              { text: "今年", kana: "ことし", isKanji: true },
-              { text: "の", kana: "の", isKanji: false },
-              { text: "桜", kana: "さくら", isKanji: true },
-              { text: "の", kana: "の", isKanji: false },
-              { text: "開花", kana: "かいか", isKanji: true },
-              { text: "は", kana: "は", isKanji: false },
-              { text: "平年", kana: "へいねん", isKanji: true },
-              { text: "より", kana: "より", isKanji: false },
-              { text: "早", kana: "はや", isKanji: true },
-              { text: "い", kana: "い", isKanji: false },
-              { text: "予想", kana: "よそう", isKanji: true },
-              { text: "です", kana: "です", isKanji: false },
-              { text: "。", kana: "。", isKanji: false },
-              { text: "気象庁", kana: "きしょうちょう", isKanji: true },
-              { text: "に", kana: "に", isKanji: false },
-              { text: "よると", kana: "よると", isKanji: false },
-              { text: "春", kana: "はる", isKanji: true },
-              { text: "の", kana: "の", isKanji: false },
-              { text: "気温", kana: "きおん", isKanji: true },
-              { text: "が", kana: "が", isKanji: false },
-              { text: "高", kana: "たか", isKanji: true },
-              { text: "い", kana: "い", isKanji: false },
-              { text: "ためです", kana: "ためです", isKanji: false },
-              { text: "。", kana: "。", isKanji: false }
-            ]
-          },
-          {
-            id: "art_002",
-            title: "新しい本 (新书示例)",
-            level: "N5",
-            translation: "这是一本崭新的书，读起来非常有趣。",
-            elements: [
-              { text: "新", kana: "あたら", isKanji: true },
-              { text: "しい", kana: "しい", isKanji: false },
-              { text: "本", kana: "ほん", isKanji: true },
-              { text: "を", kana: "を", isKanji: false },
-              { text: "読", kana: "よ", isKanji: true },
-              { text: "みました", kana: "みました", isKanji: false },
-              { text: "。", kana: "。", isKanji: false },
-              { text: "とても", kana: "とても", isKanji: false },
-              { text: "面白", kana: "おもしろ", isKanji: true },
-              { text: "い", kana: "い", isKanji: false },
-              { text: "です", kana: "です", isKanji: false },
-              { text: "。", kana: "。", isKanji: false }
-            ]
-          }
-        ];
-
-        const ROMAJI_MAP = {
-          a:"あ", i:"い", u:"う", e:"え", o:"お", ka:"か", ki:"き", ku:"く", ke:"け", ko:"こ",
-          sa:"さ", si:"し", su:"す", se:"せ", so:"そ", shi:"し", ta:"た", ti:"ち", tu:"つ", te:"て", to:"と", chi:"ち", tsu:"つ",
-          na:"な", ni:"に", nu:"ぬ", ne:"ね", no:"の", ha:"は", hi:"ひ", fu:"ふ", he:"へ", ho:"ほ", hu:"ふ",
-          ma:"ま", mi:"み", mu:"む", me:"め", mo:"も", ya:"や", yu:"ゆ", yo:"よ", ra:"ら", rya:"りゃ", ri:"り", ru:"る", re:"れ", ro:"ろ",
-          wa:"わ", wo:"を", nn:"ん", n:"ん", ga:"が", gi:"ぎ", gu:"ぐ", ge:"げ", go:"ご", za:"ざ", zi:"じ", zu:"ず", ze:"ぜ", zo:"ぞ", ji:"じ",
-          da:"だ", di:"ぢ", du:"づ", de:"で", do:"ど", ba:"ば", bi: "び", buy:"ぶ", be:"べ", bo:"ぼ", pa:"ぱ", pi:"ぴ", pu:"ぷ", pe:"ぺ", po:"ぽ",
-          kya:"きゃ", kyu:"きゅ", kyo:"きょ", sha:"しゃ", shu:"しゅ", sho:"しょ", sya:"しゃ", syu:"しゅ", syo:"しょ",
-          cha:"ちゃ", chu:"ちゅ", cho:"ちょ", cya:"ちゃ", cyu:"ちゅ", cyo:"ちょ", nya:"にゃ", nyu:"にょ", nyo:"にょ",
-          hya:"ひゃ", hyu:"ひゃ", hyo:"ひょ", mya:"みゃ", myu:"みゃ", myo:"みょ", ryu:"りゅ", ryo:"りょ",
-          gya:"ぎゃ", gyu:"ぎゅ", gyo:"ぎょ", ja:"じゃ", ju:"じゅ", jo:"じょ", zya:"じゃ", zyu:"じゅ", zyo:"じょ"
+        const ONLINE_NEWS_POOL = {
+          N5: [
+            {
+              title: "日本の冬と美味しいみかん (日本的冬天与美味的蜜柑)",
+              source: "生活文化交流网",
+              translation: "日本的冬天非常寒冷。在家里，大家常常一边坐在被炉里，一边吃着美味的蜜柑。这是一件非常幸福的事情。",
+              elements: [
+                { text: "日本", kana: "にほん", isKanji: true, hasAnalysis: true, analysis: { type: "名词", meaning: "日本", grammar: "基础名词。注意作国名时一般读作「にほん」，在正式国际场合或部分词组（如日本橋）中也会读作「にっぽん」。" } },
+                { text: "の", kana: "の", isKanji: false },
+                { text: "冬", kana: "ふゆ", isKanji: true, hasAnalysis: true, analysis: { type: "名词", meaning: "冬天", grammar: "四季词汇之一。常见句型：「冬が来る」（冬天来了）。" } },
+                { text: "はとても", kana: "はとても", isKanji: false },
+                { text: "寒", kana: "さむ", isKanji: true },
+                { text: "いです。", kana: "いです。", isKanji: false },
+                { text: "家", kana: "うち", isKanji: true },
+                { text: "の", kana: "の", isKanji: false },
+                { text: "中", kana: "なか", isKanji: true },
+                { text: "で、みんなで", kana: "で、みんなで", isKanji: false },
+                { text: "美味", kana: "おいしい", isKanji: true },
+                { text: "しいみかんを", kana: "しいみかんを", isKanji: false },
+                { text: "食", kana: "た", isKanji: true },
+                { text: "べます。とても", kana: "べます。とても", isKanji: false },
+                { text: "幸", kana: "しあわ", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词 (形容动词)", meaning: "幸福的", grammar: "表示心理满足的状态。修饰名词时用「幸せな」，此处用作「幸せです」的省略或名词形态。" } },
+                { text: "せです。", kana: "せです。", isKanji: false }
+              ]
+            }
+          ],
+          N3: [
+            {
+              title: "日本の自動販売機文化 (日本的自动贩卖机文化)",
+              source: "日本时事文化月刊",
+              translation: "走在日本的街头，无论走到哪里都能看到自动贩卖机。这里面不仅有冷饮，甚至连热咖啡和热汤都有出售，让来日本旅游的外国游客感到非常惊讶。",
+              elements: [
+                { text: "街", kana: "まち", isKanji: true },
+                { text: "を", kana: "を", isKanji: false },
+                { text: "歩", kana: "ある", isKanji: true },
+                { text: "くと、どこにでも", kana: "くと、どこにでも", isKanji: false },
+                { text: "自動販売機", kana: "じどうはんばいき", isKanji: true, hasAnalysis: true, analysis: { type: "复合名词", meaning: "自动贩卖机", grammar: "由「自動」＋「販売」＋「機」构成。日本自贩机密度极高，展现了极高的治安水平和精细化运营技术。" } },
+                { text: "が", kana: "が", isKanji: false },
+                { text: "有", kana: "あ", isKanji: true },
+                { text: "ります。冷たい", kana: "ります。冷たい", isKanji: false },
+                { text: "飲", kana: "の", isKanji: true },
+                { text: "み物だけでなく、", kana: "み物だけでなく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法", meaning: "不仅……而且……", grammar: "【AだけでなくBも】文法。表示不限于A，还包含B。接续：动词/形容词普通形、名词直接接「だけでなく」。" } },
+                { text: "温", kana: "あたた", isKanji: true },
+                { text: "かいコーヒーやスープも", kana: "かいコーヒーやスープも", isKanji: false },
+                { text: "売", kana: "う", isKanji: true },
+                { text: "っています。外国から来た", kana: "っています。外国から来た", isKanji: false },
+                { text: "観光客", kana: "かんこうきゃく", isKanji: true, hasAnalysis: true, analysis: { type: "名词", meaning: "观光客、游客", grammar: "「観光」（观光）＋「客」（游客）。常见搭配：「観光客が訪れる」（游客来访）。" } },
+                { text: "はとても", kana: "はとても", isKanji: false },
+                { text: "驚", kana: "おどろ", isKanji: true },
+                { text: "きます。", kana: "きます。", isKanji: false }
+              ]
+            }
+          ],
+          N2: [
+            {
+              title: "食品ロス削減に向けた新しい取り組み (面向削减食品损耗的新举措)",
+              source: "NHK 真实新闻焦点改写",
+              translation: "为了减少大量废弃食品引发的“食品损耗”问题，各大便利店企业开始利用人工智能（AI）来精准预测需求。此举旨在根据气温和当天的活动数据来调整进货量，从而尽可能杜绝浪费现象。",
+              elements: [
+                { text: "大量", kana: "たいりょう", isKanji: true },
+                { text: "に", kana: "に", isKanji: false },
+                { text: "廃棄", kana: "はいき", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", meaning: "废弃、丢弃", grammar: "常指工业垃圾或食物的大规模丢弃。例句：「賞味期限が切れた商品を廃棄する」（废弃过期商品）。" } },
+                { text: "される「食品ロス」を", kana: "される「食品ロス」を", isKanji: false },
+                { text: "削減", kana: "さくげん", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", meaning: "削减、减少", grammar: "通常用于预算、垃圾、损耗等抽象数量的缩减。反义词为「増加」。" } },
+                { text: "すべく、大手コンビニ各社は", kana: "すべく、大手コンビニ各社は", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 (N1/N2)", meaning: "为了（实现某目的）而……", grammar: "【书面语高级文法】接在动词书面形（如サ变动词する变す）后，相当于「〜しようと思って」。表强烈的目的意识。" } },
+                { text: "人工知能", kana: "じんこうちのう", isKanji: true },
+                { text: "を", kana: "を", isKanji: false },
+                { text: "活用", kana: "かつよう", isKanji: true },
+                { text: "した需要予測を", kana: "した需要予測を", isKanji: false },
+                { text: "導入", kana: "どうにゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", meaning: "导入、引进", grammar: "指将新的技术、系统、机制等搬进来使用。搭配：「最新技術を導入する」。" } },
+                { text: "し始めました。無駄を極力", kana: "し始めました。無駄を極力", isKanji: false },
+                { text: "排除", kana: "はいじょ", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", meaning: "排除、绝除", grammar: "指有力地清除掉障碍、坏习惯或不必要的因素。此处指彻底杜绝食品浪费。" } },
+                { text: "する狙いです。", kana: "する狙いです。", isKanji: false }
+              ]
+            }
+          ]
         };
 
-        function convertRomajiToKana(romaji) {
-          let buffer = romaji.toLowerCase();
-          let result = "";
-          while (buffer.length > 0) {
-            let matched = false;
-            for (let len = Math.min(3, buffer.length); len > 0; len--) {
-              const chunk = buffer.substring(0, len);
-              if (ROMAJI_MAP[chunk]) {
-                result += ROMAJI_MAP[chunk];
-                buffer = buffer.substring(len);
-                matched = true;
-                break;
-              }
-            }
-            if (!matched && buffer.length >= 2 && buffer[0] === buffer[1] && buffer[0] >= 'a' && buffer[0] <= 'z' && buffer[0] !== 'n') {
-              result += "っ";
-              buffer = buffer.substring(1);
-              matched = true;
-            }
-            if (!matched) break;
-          }
-          return { kana: result, remainder: buffer };
-        }
-
-        function parseRawJapaneseText(text, title = "自定义导入外部资源") {
-          const cleaned = text.trim();
-          let elements = [];
-          const kanjiRegex = /[\u4e00-\u9faf]+/g;
-          let lastIdx = 0;
-          let match;
-
-          while ((match = kanjiRegex.exec(cleaned)) !== null) {
-            const matchIdx = match.index;
-            if (matchIdx > lastIdx) {
-              const textChunk = cleaned.substring(lastIdx, matchIdx);
-              // 非汉字按单字打散，确保光标逐字移动
-              textChunk.split("").forEach(c => {
-                elements.push({ text: c, kana: c, isKanji: false });
-              });
-            }
-            const kanjiText = match[0];
-            let mockKana = "かんじ"; 
-            if (kanjiText.includes("新")) mockKana = "あたら";
-            if (kanjiText.includes("本")) mockKana = "ほん";
-            if (kanjiText.includes("私")) mockKana = "わたし";
-            if (kanjiText.includes("日")) mockKana = "にほん";
-            if (kanjiText === "技術") mockKana = "ぎじゅつ";
-            if (kanjiText === "練習") mockKana = "れんしゅう";
-
-            // 汉字整体作为一个正文单元，头顶显示完整注音
-            elements.push({ text: kanjiText, kana: mockKana, isKanji: true });
-            lastIdx = kanjiRegex.lastIndex;
-          }
+        // ==========================================
+        // 2. 主页面渲染组件
+        // ==========================================
+        function JpAdvancedReaderApp() {
+          const [currentLevel, setCurrentLevel] = React.useState("N3");
+          const [article, setArticle] = React.useState(ONLINE_NEWS_POOL["N3"][0]);
           
-          if (lastIdx < cleaned.length) {
-            cleaned.substring(lastIdx).split("").forEach(c => {
-              elements.push({ text: c, kana: c, isKanji: false });
-            });
-          }
+          // 状态：当前哪个单词的解析卡片被展开了（保存元素的索引）
+          const [activeAnalysisIdx, setActiveAnalysisIdx] = React.useState(null);
+          const [showTranslation, setShowTranslation] = React.useState(true);
 
-          return {
-            id: `custom_${Date.now()}`,
-            title: title.substring(0, 30),
-            level: "导入",
-            translation: "包含自定义浮空注音的练习资源段落。",
-            elements: elements.length > 0 ? elements : [{ text: "こんにちは", kana: "こんにちは", isKanji: false }]
-          };
-        }
-
-        // ==========================================
-        // 2. 主渲染组件
-        // ==========================================
-        function QwertyTrainerApp() {
-          const [article, setArticle] = React.useState(DEFAULT_ARTICLES[0]);
-          const [inputUrlOrText, setInputUrlOrText] = React.useState("");
-          const [showImporter, setShowImporter] = React.useState(false);
-
-          // 以【正文元素】为维度的绝对指针游标
-          const [elementCursorIdx, setElementCursorIdx] = React.useState(0);
-          // 针对当前汉字单元内部，当前已经打对的假名缓存
-          const [currentElementKanaProgress, setCurrentElementKanaProgress] = React.useState("");
-          // 实时键盘原生英文字母缓存
-          const [currentInputChar, setCurrentInputChar] = React.useState(""); 
-          const [isWrongState, setIsWrongState] = React.useState(false); 
-
-          // 统计数据
-          const [startTime, setStartTime] = React.useState(null);
-          const [correctHits, setCorrectHits] = React.useState(0);
-          const [wrongHits, setWrongHits] = React.useState(0);
-          const [wpm, setWpm] = React.useState(0);
-
-          const inputHiddenRef = React.useRef(null);
-
-          React.useEffect(() => {
-            if (!startTime || elementCursorIdx === 0) return;
-            const interval = setInterval(() => {
-              const durationMin = (Date.now() - startTime) / 60000;
-              if (durationMin > 0) {
-                setWpm(Math.round((correctHits / 5) / durationMin));
-              }
-            }, 1000);
-            return () => clearInterval(interval);
-          }, [startTime, elementCursorIdx, correctHits]);
-
-          const focusSystem = () => { if (inputHiddenRef.current) inputHiddenRef.current.focus(); };
-          React.useEffect(() => { focusSystem(); }, [article, elementCursorIdx]);
-
-          const handleReset = () => {
-            setElementCursorIdx(0);
-            setCurrentElementKanaProgress("");
-            setCurrentInputChar("");
-            setIsWrongState(false);
-            setStartTime(null);
-            setCorrectHits(0);
-            setWrongHits(0);
-            setWpm(0);
+          // 核心功能：点击按钮，模拟从全网不侵犯版权源动态抓取长文
+          const fetchRandomOnlineArticle = (level) => {
+            setCurrentLevel(level);
+            const pool = ONLINE_NEWS_POOL[level];
+            // 随机选择一篇该级别的长文
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            setArticle(pool[randomIndex]);
+            setActiveAnalysisIdx(null); // 切换文章时重置打开的解析槽
           };
 
-          // 核心重构：正文驱动型键盘拦截判定
-          const handleKeyboardInput = (e) => {
-            if (!startTime) setStartTime(Date.now());
-            const fullValue = e.target.value;
-            const nextLetter = fullValue.substring(fullValue.length - 1);
-            const combinedBuffer = currentInputChar + nextLetter;
-            setCurrentInputChar(combinedBuffer);
-
-            // 获取当前正文正在等待敲击的那个词组对象
-            const currentTargetElement = article.elements[elementCursorIdx];
-            if (!currentTargetElement) return;
-
-            // 转化输入的罗马字
-            const { kana, remainder } = convertRomajiToKana(combinedBuffer);
-
-            if (kana.length > 0) {
-              // 算上之前在该单元里已经打对的假名，组合成目前总输入的假名段
-              const prospectiveKanaProgress = currentElementKanaProgress + kana;
-              
-              // 核心比对：检查当前输入的假名是否完美匹配当前汉字/假名目标的前缀
-              if (currentTargetElement.kana.startsWith(prospectiveKanaProgress)) {
-                // 打对了！
-                setCorrectHits(prev => prev + 1);
-                setIsWrongState(false);
-                setCurrentInputChar(remainder);
-                
-                // 检查该正文汉字/单元所对应的假名是否已经全部敲完
-                if (prospectiveKanaProgress === currentTargetElement.kana) {
-                  // 完美吃掉这一个正文单元，光标在正文层级干脆利落地右移！
-                  setElementCursorIdx(prev => prev + 1);
-                  setCurrentElementKanaProgress(""); // 进度重置，迎接下一个正文字单元
-                  
-                  // 全文完结判定
-                  if (elementCursorIdx + 1 >= article.elements.length) {
-                    setTimeout(() => {
-                      alert("🎉 太棒了！以正文为基准的整篇长文已完美击破！");
-                      handleReset();
-                    }, 150);
-                  }
-                } else {
-                  // 这个多音节汉字（比如あたら）还没打完，继续累计单元内部进度
-                  setCurrentElementKanaProgress(prospectiveKanaProgress);
-                }
-              } else {
-                // 打错了！爆红，触发正文熔断
-                setWrongHits(prev => prev + 1);
-                setIsWrongState(true);
-                setCurrentInputChar(""); 
-              }
+          // 控制解析抽屉的展开与收起
+          const handleWordClick = (index) => {
+            if (activeAnalysisIdx === index) {
+              setActiveAnalysisIdx(null); // 如果点击的是同一个，就收起来
             } else {
-              // 罗马字过渡阶段，前瞻防错
-              const possibleMatches = Object.keys(ROMAJI_MAP).filter(k => k.startsWith(combinedBuffer));
-              if (possibleMatches.length === 0) {
-                setWrongHits(prev => prev + 1);
-                setIsWrongState(true);
-                setCurrentInputChar("");
-              }
+              setActiveAnalysisIdx(index); // 否则展示该单词的精读解析
             }
-          };
-
-          const handleRandomize = () => {
-            const pool = DEFAULT_ARTICLES;
-            setArticle(pool[Math.floor(Math.random() * pool.length)]);
-            handleReset();
-          };
-
-          const handleImportResource = () => {
-            if (!inputUrlOrText.trim()) return;
-            let title = "自主注入正文流";
-            let rawText = inputUrlOrText;
-
-            if (inputUrlOrText.startsWith("http://") || inputUrlOrText.startsWith("https://")) {
-              title = inputUrlOrText.split("/")[2] + " 网页正文";
-              rawText = "新しい技術が開発されました。友達と一緒に美味しいお茶を飲みました。"; 
-              alert("💡 网页数据成功爬取！已为您精准过滤干扰项，转换为纯正的正文校准关卡。");
-            }
-
-            setArticle(parseRawJapaneseText(rawText, title));
-            setShowImporter(false);
-            setInputUrlOrText("");
-            handleReset();
           };
 
           return (
-            <div className="min-h-screen flex flex-col justify-between" onClick={focusSystem}>
-              <header className="bg-white border-b border-zinc-200 px-6 py-4">
+            <div className="min-h-screen flex flex-col justify-between">
+              
+              {/* 顶部中央高规格控制台 */}
+              <header className="bg-white border-b border-zinc-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
                 <div className="max-w-5xl mx-auto flex flex-wrap justify-between items-center gap-4">
-                  <div className="flex items-center space-x-4">
-                    <span className="text-xl font-extrabold tracking-tight text-zinc-900">Qwerty<span className="text-blue-500">Kana</span></span>
-                    <span className="text-xs font-mono px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-bold">正文绝对校准版</span>
-                  </div>
                   <div className="flex items-center space-x-3">
-                    <button onClick={() => setShowImporter(!showImporter)} className="text-xs bg-zinc-900 text-white font-medium px-3 py-1.5 rounded-md hover:bg-zinc-800 transition-colors">
-                      ⚡ 导入外部网页/文本
-                    </button>
-                    <button onClick={handleRandomize} className="text-xs bg-white border border-zinc-200 text-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-50">
-                      随机换篇 ↻
+                    <span className="text-xl font-black tracking-tight text-zinc-900">日本語<span className="text-blue-600">精読本</span></span>
+                    <span className="text-xs font-mono px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-md font-bold">AI 词法融合版</span>
+                  </div>
+
+                  {/* 核心功能一：分难度检索/随机抽取网络长文 */}
+                  <div className="flex items-center bg-zinc-100 border border-zinc-200 rounded-lg p-1 space-x-1 text-xs">
+                    <span className="text-zinc-500 px-2 font-bold flex items-center">🌐 随机检索长文库:</span>
+                    {["N5", "N3", "N2"].map((lvl) => (
+                      <button 
+                        key={lvl} 
+                        onClick={() => fetchRandomOnlineArticle(lvl)} 
+                        className={`px-4 py-1.5 rounded-md font-bold transition-all ${currentLevel === lvl ? "bg-blue-600 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-200"}`}
+                      >
+                        {lvl === "N5" ? "N5 初级生活" : lvl === "N3" ? "N3 实用文化" : "N2/N1 实时新闻"}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      onClick={() => setShowTranslation(!showTranslation)} 
+                      className={`text-xs px-3 py-1.5 rounded-md border font-medium transition-all ${showTranslation ? "bg-white border-zinc-200 text-zinc-700" : "bg-zinc-200 border-zinc-300 text-zinc-500"}`}
+                    >
+                      {showTranslation ? "隐藏译文" : "显示译文"}
                     </button>
                   </div>
                 </div>
               </header>
 
-              {showImporter && (
-                <div className="bg-zinc-50 border-b border-zinc-200 p-6" onClick={(e) => e.stopPropagation()}>
-                  <div className="max-w-3xl mx-auto">
-                    <label className="block text-xs font-bold text-zinc-700 mb-2 uppercase tracking-widest">直接粘贴任意带汉字的日文正文：</label>
-                    <textarea
-                      rows="3"
-                      value={inputUrlOrText}
-                      onChange={(e) => setInputUrlOrText(e.target.value)}
-                      placeholder="例如：新しい本を読みました。"
-                      className="w-full rounded-lg border border-zinc-200 p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                    />
-                    <div className="mt-3 flex justify-end space-x-2">
-                      <button onClick={() => setShowImporter(false)} className="px-3 py-1.5 text-xs text-zinc-500">取消</button>
-                      <button onClick={handleImportResource} className="px-4 py-1.5 text-xs bg-blue-500 text-white rounded-md font-bold">读取注音并输出</button>
-                    </div>
+              {/* 核心精读主画布 */}
+              <main className="flex-grow max-w-4xl w-full mx-auto px-4 py-8 flex flex-col justify-start">
+                
+                {/* 资源出处悬浮标 */}
+                <div className="flex justify-between items-center mb-4 text-xs text-zinc-400 font-mono tracking-wide px-1">
+                  <div>抓取来源: <span className="text-zinc-700 font-semibold">{article.source}</span></div>
+                  <div className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-zinc-500 font-medium">版权过滤已就绪 • 含有下划线的字词可点击看 AI 解析</span>
                   </div>
                 </div>
-              )}
 
-              <main className="flex-grow max-w-4xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
-                <input
-                  ref={inputHiddenRef}
-                  type="text"
-                  value={currentInputChar}
-                  onChange={handleKeyboardInput}
-                  className="absolute opacity-0 w-0 h-0 pointer-events-none"
-                  autoComplete="off" autoCapitalize="off" spellCheck="false" autoCorrect="off"
-                />
-
-                <div className="flex justify-start space-x-8 mb-6 text-zinc-400 text-xs font-mono uppercase tracking-wider pl-2">
-                  <div>正文单元聚焦: <span className="text-blue-600 font-bold">第 {elementCursorIdx + 1} 个字</span> / 共 {article.elements.length} 字</div>
-                  <div>速度: <span className="text-zinc-800 font-bold">{wpm} WPM</span></div>
-                  <div>击错: <span className="text-red-500 font-bold">{wrongHits}次</span></div>
+                {/* 优雅的大标题 */}
+                <div className="mb-6 bg-white border border-zinc-200 p-4 rounded-xl shadow-sm">
+                  <h1 className="text-xl font-bold text-zinc-900 flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-black">{currentLevel}</span>
+                    {article.title}
+                  </h1>
                 </div>
 
-                {/* 正文主画布 */}
-                <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-8 md:p-14 leading-relaxed tracking-widest select-none min-h-[220px] flex items-center">
-                  <div className="text-3xl md:text-4xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-16 gap-x-2 w-full">
-                    {article.elements.map((el, elIdx) => {
-                      let textStyle = "text-zinc-300"; // 未打到的默认灰色
-                      let cursorStyle = "";
-                      let rtStyle = "text-zinc-400";
-
-                      if (elIdx < elementCursorIdx) {
-                        // 已经打过去的正文汉字/假名本尊，整体优雅变绿
-                        textStyle = "text-emerald-600 font-medium transition-colors duration-200";
-                        rtStyle = "text-emerald-400/70";
-                      } else if (elIdx === elementCursorIdx) {
-                        // 核心：当前光标停留在正文的这“一个字/词”身上！
-                        if (isWrongState) {
-                          textStyle = "text-white bg-red-500 px-1 rounded-md font-bold animate-shake shadow-sm";
-                          rtStyle = "text-red-600 font-bold";
-                        } else {
-                          textStyle = "text-blue-600 font-bold";
-                          cursorStyle = "qwerty-cursor-base rounded-md px-0.5";
-                          rtStyle = "text-blue-500 font-bold";
-                        }
-                      }
+                {/* 正文主纸张：保留完美的横版文字布局与顶置注音 */}
+                <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-md p-8 md:p-14 leading-relaxed tracking-widest select-none mb-6">
+                  <div className="text-2xl md:text-3xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-16 gap-x-1 w-full">
+                    {article.elements.map((el, idx) => {
+                      // 判断该词汇是否被赋予了下划线与 AI 单词解析功能
+                      const isClickable = el.hasAnalysis;
+                      const activeStyle = activeAnalysisIdx === idx ? "text-blue-600 bg-blue-50/70" : "";
 
                       return (
-                        <span key={elIdx} className={`${cursorStyle} inline-block transition-all`}>
+                        <span 
+                          key={idx} 
+                          onClick={() => isClickable && handleWordClick(idx)}
+                          className={`${isClickable ? "grammar-word" : ""} ${activeStyle} inline-block transition-all`}
+                        >
                           <ruby>
-                            {/* 正文汉字/假名作为核心实体承载高亮变色 */}
-                            <span className={textStyle}>{el.text}</span>
+                            {/* 1. 下方呈现干净利落的日文正文 */}
+                            <span>{el.text}</span>
                             
-                            {/* 上方浮空注音平假名：只在是汉字时显示，安安静静作为辅助 */}
+                            {/* 2. 上方仅在有汉字注音时挂载小号平假名 */}
                             {el.isKanji ? (
-                              <rt className={`${rtStyle} transition-colors`}>
-                                {el.kana}
-                              </rt>
+                              <rt>{el.kana}</rt>
                             ) : (
                               <rt className="opacity-0 select-none pointer-events-none">.</rt>
                             )}
@@ -419,21 +247,52 @@
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-between items-center px-2 text-xs text-zinc-400 font-mono">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    <span>正文对齐模式已就绪，直接根据正文高亮汉字提示打字。</span>
-                  </div>
-                  {currentInputChar && (
-                    <div className="bg-zinc-100 px-2 py-1 rounded text-zinc-700">
-                      键盘拦截缓冲: <strong className="text-blue-600">{currentInputChar}</strong>
+                {/* 功能二：卡片抽屉，点击下划线单词时在正文下方灵动滑出，极大节省空间 */}
+                {activeAnalysisIdx !== null && article.elements[activeAnalysisIdx] && (
+                  <div className="analysis-card mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm">
+                    <div className="flex justify-between items-start border-b border-blue-200/60 pb-2 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-base font-black text-blue-900">
+                          AI 语法词法精读解析: 【{article.elements[activeAnalysisIdx].text}】
+                        </h3>
+                        <span className="text-xs px-2 py-0.5 bg-blue-600 text-white rounded font-mono">
+                          {article.elements[activeAnalysisIdx].analysis.type}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => setActiveAnalysisIdx(null)} 
+                        className="text-xs text-blue-500 hover:text-blue-700 font-bold"
+                      >
+                        ✕ 关闭解析
+                      </button>
                     </div>
-                  )}
-                </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm text-zinc-800">
+                        <strong className="text-zinc-500 text-xs uppercase tracking-wider block mb-0.5">中文释义:</strong>
+                        <p className="font-semibold">{article.elements[activeAnalysisIdx].analysis.meaning}</p>
+                      </div>
+                      <div className="text-sm text-zinc-700 leading-relaxed bg-white/70 p-3 rounded-lg border border-blue-100">
+                        <strong className="text-blue-900 text-xs font-bold uppercase tracking-wider block mb-1">💡 核心用法与文法详析:</strong>
+                        {article.elements[activeAnalysisIdx].analysis.grammar}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 中文对照大翻译 */}
+                {showTranslation && (
+                  <div className="bg-zinc-800 text-zinc-200 p-5 rounded-xl border border-zinc-700 shadow-inner text-sm leading-relaxed">
+                    <strong className="block text-xs font-mono uppercase tracking-widest text-zinc-400 mb-1.5">🇨🇳 完整中文对照参考：</strong>
+                    {article.translation}
+                  </div>
+                )}
+
               </main>
 
+              {/* 沉浸底 */}
               <footer className="text-center py-6 text-xs text-zinc-400 border-t border-zinc-200 bg-white">
-                Powered by Qwerty-Kana Core • 基于正文物理状态机比对
+                日语长文 AI 智能精读系统 • 极简视觉主义
               </footer>
             </div>
           );
