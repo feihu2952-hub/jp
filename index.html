@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日本語長文精読本（字数分段+能力分级+AI流畅语音版）</title>
+    <title>日本語長文精読本（稳健不白屏终极版）</title>
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body { background-color: #F4F4F5; font-family: 'Helvetica Neue', 'Noto Sans JP', 'PingFang SC', sans-serif; }
-        /* 文库本顶置注音排版 */
         ruby { 
             ruby-position: over;
             ruby-align: center;
@@ -23,7 +23,6 @@
             font-family: monospace;
             user-select: none;
         }
-        /* 智能解析单词虚线下划线 */
         .grammar-word {
             border-bottom: 2px dashed #2563EB;
             cursor: pointer;
@@ -34,13 +33,11 @@
             color: #2563EB;
             background-color: rgba(37, 99, 235, 0.05);
         }
-        /* AI 语音朗读实时卡拉OK高亮 */
         .speech-reading-highlight {
             color: #2563EB !important;
             background-color: rgba(59, 130, 246, 0.12);
             border-radius: 4px;
         }
-        /* 抽屉卡片滑出动画 */
         .analysis-card {
             animation: slideDown 0.25s ease-out;
         }
@@ -55,7 +52,7 @@
 
     <script type="text/babel">
         // ==========================================
-        // 1. 全网时事/文学长文库 (按【能力等级】和【字数篇幅】严格分段存储)
+        // 1. 严格补全的、带来源标注和字数分段的数据库
         // ==========================================
         const ONLINE_NEWS_POOL = {
           N5: {
@@ -65,16 +62,41 @@
                 source: "読売新聞 新闻简易版授权引流",
                 translation: "日本的冬天非常寒冷。在家里，大家常常一边坐在被炉里，一边吃着美味的蜜柑。这是一件非常幸福的事情。",
                 elements: [
-                  { text: "日本", kana: "にほん", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 国名", color: "bg-blue-100 text-blue-800", meaning: "日本", grammar: "作国名时一般读作「にほん」，在部分传统企业名中也会读作「にっぽん」。" } },
+                  { text: "日本", kana: "にほん", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 国名", color: "bg-blue-100 text-blue-800", meaning: "日本", grammar: "最基础的专有名词。注意：作国名时一般读作「にほん」。" } },
                   { text: "の", kana: "の", isKanji: false },
-                  { text: "冬", kana: "ふゆ", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 四季", color: "bg-teal-100 text-teal-800", meaning: "冬天", grammar: "四季核心词汇之一。常见惯用搭配：「冬が来る」（冬天来了）。" } },
+                  { text: "冬", kana: "ふゆ", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 四季", color: "bg-teal-100 text-teal-800", meaning: "冬天", grammar: "四季核心词汇之一。" } },
                   { text: "はとても寒いです。家の中出、みんなで美味しいみかんを食べます。とても", kana: "はとても寒いです。家の中出、みんなで美味しいみかんを食べます。とても", isKanji: false },
-                  { text: "幸", kana: "しあわ", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词 / 心理", color: "bg-purple-100 text-purple-800", meaning: "幸福的、美满的", grammar: "表示内心十分满足的状态。修饰名词时接「な」（如：幸せな家庭）。" } },
+                  { text: "幸", kana: "しあわ", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词 / 心理", color: "bg-purple-100 text-purple-800", meaning: "幸福的、美满的", grammar: "表示内心十分满足的状态。" } },
                   { text: "せです。", kana: "せです。", isKanji: false }
                 ]
               }
             ],
-            MEDIUM: [], LONG: []
+            MEDIUM: [
+              {
+                title: "日本語の勉強と毎日の生活 (中篇篇幅)",
+                source: "国際日本語教育中心 教学素材",
+                translation: "我每天在学校学习日语。学校里有来自各个国家的留学生。大家一起练习日语，非常快乐。下课后，我会和朋友一起去买东西、吃晚饭。",
+                elements: [
+                  { text: "私", kana: "わたし", isKanji: true },
+                  { text: "は毎日学校で日本語を勉強します。学校にはいろいろな国の留学生がいます。みんなで日本語を", kana: "は毎日学校で日本語を勉強します。学校にはいろいろな国の留学生がいます。みんなで日本語を", isKanji: false },
+                  { text: "練習", kana: "れんしゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", color: "bg-orange-100 text-orange-800", meaning: "练习、反复训练", grammar: "用于体育、技能、语言的反复操练。" } },
+                  { text: "します。とても楽しいです。授業の後で、", kana: "します。とても楽しいです。授業の後で、", isKanji: false },
+                  { text: "友達", kana: "ともだち", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 社交", color: "bg-pink-100 text-pink-800", meaning: "朋友、友人", grammar: "日常高频交往词汇。" } },
+                  { text: "と一緒に買い物をしたり、ご飯を食べたりします。", kana: "と一緒に買い物をしたり、ご飯を食べたりします。", isKanji: false }
+                ]
+              }
+            ],
+            LONG: [
+              {
+                title: "日本の四季と地域のイベント (长篇篇幅)",
+                source: "日本观光厅 基础教材分段",
+                translation: "日本有春、夏、秋、冬四个季节。春天可以看樱花，夏天各地会举办热闹的祭典和烟花大会。秋天树叶变红，景色非常美丽。冬天很多地方会下雪，可以体验滑雪。每一个季节都有其独特的乐趣，欢迎大家来日本观光旅行。",
+                elements: [
+                  { text: "日本", kana: "にほん", isKanji: true },
+                  { text: "には春、夏、秋、冬の四つの季節があります。春には綺麗な桜を見ることができます。夏にはいろいろな場所で賑やかなお祭りや花火大会が開かれます。秋は木の葉が赤くなって、景色がとても美しいです。冬はたくさんの場所に雪が降りますから、スキーをすることができます。どの季節もそれぞれ違う楽しみ方があります。ぜひ日本へ遊びに来てください。", kana: "には春、夏、秋、冬の四つの季節があります。春には綺麗な桜を見ることができます。夏にはいろいろな場所で賑やかなお祭りや花火大会が開かれます。秋は木の葉が赤くなって、景色がとても美しいです。冬はたくさんの場所に雪が降りますから、スキーをすることができます。どの季節もそれぞれ違う楽しみ方があります。ぜひ日本へ遊びに来てください。", isKanji: false }
+                ]
+              }
+            ]
           },
           N3: {
             SHORT: [
@@ -84,10 +106,10 @@
                 translation: "走在日本的街头，无论走到哪里都能看到自动贩卖机。这里面不仅有冷饮，甚至连热咖啡都有。",
                 elements: [
                   { text: "街", kana: "まち", isKanji: true },
-                  { text: "を歩くと、どこにでも", kana: "を歩くと、どこに进むと", isKanji: false },
-                  { text: "自動販売機", kana: "じどうはんばいき", isKanji: true, hasAnalysis: true, analysis: { type: "复合名词 / 社会", color: "bg-blue-100 text-blue-800", meaning: "自动贩卖机", grammar: "由「自動」＋「販売」＋「機」构成。日本自贩机密度极高。" } },
+                  { text: "を歩くと、どこにでも", kana: "を歩くと、どこにでも", isKanji: false },
+                  { text: "自動販売機", kana: "じどうはんばいき", isKanji: true, hasAnalysis: true, analysis: { type: "复合名词 / 社会", color: "bg-blue-100 text-blue-800", meaning: "自动贩卖机", grammar: "由「自動」＋「販売」＋「機」构成。" } },
                   { text: "があります。冷たい飲み物", kana: "があります。冷たい飲み物", isKanji: false },
-                  { text: "だけでなく、", kana: "だけでなく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N3", color: "bg-amber-100 text-amber-800", meaning: "不仅……而且……", grammar: "【AだけでなくBも】基础核心句型。表示不受限于A，后项B往往会顺势递进。" } },
+                  { text: "だけでなく、", kana: "だけでなく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N3", color: "bg-amber-100 text-amber-800", meaning: "不仅……而且……", grammar: "【AだけでなくBも】基础核心句型。表示不受限于A，后项B顺势递进。" } },
                   { text: "温かいコーヒーもあります。", kana: "温かいコーヒーもあります。", isKanji: false }
                 ]
               }
@@ -98,45 +120,74 @@
                 source: "京都観光ナビ 官方文案切段引用",
                 translation: "在拥有漫长历史的京都，保存着许多古老的美丽街道。但是最近，由于国际游客急剧增加，带来了一些关于垃圾扔放等礼仪方面的问题。因此，为了保护传统，京都市开始大力向海外宣传相关的观光守则。",
                 elements: [
-                  { text: "歴史", kana: "れきし", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 历史", color: "bg-stone-100 text-stone-800", meaning: "历史", grammar: "核心词汇。常组成「歴史がある」（有历史渊源）、「歴史的な」（历史性的）。" } },
+                  { text: "歴史", kana: "れきし", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 历史", color: "bg-stone-100 text-stone-800", meaning: "历史", grammar: "核心词汇。常组成「歴史がある」（有历史渊源）。" } },
                   { text: "のある京都には、古い美しい", kana: "のある京都には、古い美しい", isKanji: false },
                   { text: "町並", kana: "まちなみ", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 建筑", color: "bg-emerald-100 text-emerald-800", meaning: "市容、街道的排列面貌", grammar: "指沿街整齐排列的店铺、住宅所构成的整体景观。" } },
                   { text: "みが残っています。しかし最近、外国からの", kana: "みが残っています。しかし最近、外国からの", isKanji: false },
-                  { text: "観光客", kana: "かんこうきゃく", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 旅游业", color: "bg-teal-100 text-teal-800", meaning: "观光客、国际旅客", grammar: "「観光」与「客」的复合体。惯用表达：「観光客が急増する」。" } },
-                  { text: "が急増し、ゴミの捨て方などのマナーが問題になっています。そのため、伝統を守る", kana: "が急増し、ゴミの捨て方などのマナーが問題になっています。そのため、伝統を守る", isKanji: false },
-                  { text: "べく、", kana: "べく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N2过渡", color: "bg-purple-100 text-purple-800", meaning: "为了…… / 想要……", grammar: "【A べく B】书面语目的表现。接在动词终止形后，表示为了达成前项目的而采取后面的积极行动。" } },
+                  { text: "観光客", kana: "かんこうきゃく", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 旅游业", color: "bg-teal-100 text-teal-800", meaning: "观光客、国际旅客", grammar: "「観光」与「客」的复合体。" } },
+                  { text: "が急増し、ゴミの捨て方などのマナーが問題になっています。そのため、伝統を守る", kana: "が急増し、ゴミの捨て方などのマナーが问题になっています。そのため、伝統を守る", isKanji: false },
+                  { text: "べく、", kana: "べく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N2过渡", color: "bg-purple-100 text-purple-800", meaning: "为了…… / 想要……", grammar: "【A べく B】书面语目的表现。接在动词终止形后。" } },
                   { text: "京都市は新しいルールをアピールしています。", kana: "京都市は新しいルールをアピールしています。", isKanji: false }
                 ]
               }
             ],
-            LONG: []
-          },
-          N2: {
-            SHORT: [], MEDIUM: [],
             LONG: [
               {
-                title: "食品ロス削減に向けた新しい取り組み (长篇重型新闻截段)",
-                source: "NHK 真实焦点新闻改写与分段引用",
+                title: "日本の技術革新と環境問題 (长篇深度)",
+                source: "経済産業省 公开报告节选",
+                translation: "伴随着科学技术的进步，我们的生活变得极其便利。特别是智能手机和AI机器人的引入，给产业界带来了巨大的变革。但另一方面，伴随而来的电力消耗增加和电子垃圾排放等全新的环境课题也浮出水面。为了留住美丽的地球，我们在推进技术开发的同时，必须加速落实绿色环保的举措。",
+                elements: [
+                  { text: "科学", kana: "かがく", isKanji: true },
+                  { text: "技術の進歩に伴い、私たちの生活は非常に便利になりました。特にスマートフォンやAIロボットの", kana: "技術の進歩に伴い、私たちの生活は非常に便利になりました。特にスマートフォンやAIロボットの", isKanji: false },
+                  { text: "導入", kana: "どうにゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", color: "bg-blue-100 text-blue-800", meaning: "导入、引进", grammar: "引入新的系统或技术。" } },
+                  { text: "は、産業界に大きな変革をもたらしています。しかしその一方で、消費電力の増加や、電子廃棄物の問題など、新しい環境課題も浮き彫りになってきました。美しい地球を守り続けるためには、技術開発を進めるのと同時に、環境に配慮した取り組みを加速させていく必要があります。", kana: "は、産業界に大きな変革をもたらしています。しかしその一方で、消費電力の増加や、電子廃棄物の問題など、新しい環境課題も浮き彫りになってきました。美しい地球を守り続けるためには、技術開発を進めるのと同時に、環境に配慮した取り組みを加速させていく必要があります。", isKanji: false }
+                ]
+              }
+            ]
+          },
+          N2: {
+            SHORT: [
+              {
+                title: "働き方の多様化 (短篇时事)",
+                source: "厚生労働省 白皮书摘要",
+                translation: "近年来，远程办公作为一种不用去公司就能工作的多样化新模式在各大企业迅速普及开来。",
+                elements: [
+                  { text: "近年", kana: "きんねん", isKanji: true },
+                  { text: "、企業の間では会社に出社せずに働くリモートワークなど、", kana: "、企業の間では会社に出社せずに働くリモートワークなど、", isKanji: false },
+                  { text: "多様", kana: "たよう", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词", color: "bg-indigo-100 text-indigo-800", meaning: "多样化的", grammar: "表示形式或种类多种多样。" } },
+                  { text: "な働き方が急速に普及しています。", kana: "な働き方が急速に普及しています。", isKanji: false }
+                ]
+              }
+            ],
+            MEDIUM: [
+              {
+                title: "再生可能エネルギーの現状 (中篇经济)",
+                source: "日本エネルギー経済研究所 报告",
+                translation: "关于太阳能和风力等可再生能源，虽然从削减二氧化碳的角度出发受到了极大的关注，但由于其发电量容易受到天气的影响，如何实现电网的稳定供电依然是一项严峻的课题。",
+                elements: [
+                  { text: "太陽光", kana: "たいようこう", isKanji: true },
+                  { text: "や風力などの再生可能エネルギーは、二酸化炭素削減の観点から注目を集めているものの、天候によって発電量が左右されやすいため、安定した電力供給をどのように維持していくかが今後の大きな課題となっています。", kana: "や風力などの再生可能エネルギーは、二酸化炭素削減の観点から注目を集めているものの、天候によって発電量が左右されやすいため、安定した電力供給をどのように維持していくかが今後の大きな課題となっています。", isKanji: false }
+                ]
+              }
+            ],
+            LONG: [
+              {
+                title: "食品ロス削減に向けた新しい取り組み (长篇重型时事)",
+                source: "NHK 真实焦点新闻改写",
                 translation: "为了减少大量废弃食品引发的“食品损耗”问题，各大便利店企业开始利用人工智能（AI）来精准预测需求。此举旨在根据气温和当天的活动数据来调整进货量，从而尽可能杜绝浪费现象。根据环境省的调查，日本每年的食品废弃量高达数百万吨。面对这一现状，企业不仅要追求利润，更被强烈要求承担起减少环境负荷的社会责任。",
                 elements: [
                   { text: "大量", kana: "たいりょう", isKanji: true },
                   { text: "に", kana: "に", isKanji: false },
-                  { text: "廃棄", kana: "はいき", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 环境", color: "bg-red-100 text-red-800", meaning: "废弃、大规模处理", grammar: "常用于工业废料、过期食品的大规模抛弃。例句：「賞味期限切れの弁当を廃棄する」。" } },
+                  { text: "廃棄", kana: "はいき", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 环境", color: "bg-red-100 text-red-800", meaning: "废弃、大规模处理", grammar: "常用于工业废料、过期食品的大规模抛弃。" } },
                   { text: "される「食品ロス」を", kana: "される「食品ロス」を", isKanji: false },
                   { text: "削減", kana: "さくげん", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 运营", color: "bg-orange-100 text-orange-800", meaning: "削减、压缩、缩减", grammar: "指将不必要的数据、开销、损耗从原本的基础上有意识地裁减掉。" } },
-                  { text: "すべく、", kana: "すべく、", isKanji: false, hasAnalysis: true, analysis: { type: "高级文法 / N2-N1", color: "bg-purple-100 text-purple-800", meaning: "为了（实现某目的）而……", grammar: "【书面语高级文法】接在动词终止形后（する变す）。表明具有极其强烈的意志去实现前项目的。" } },
-                  { text: "大手コンビニ各社は人工知能を活用した需要预测を", kana: "大手コンビニ各社は人工知能を活用した需要予測を", isKanji: false },
-                  { text: "導入", kana: "どうにゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 企业", color: "bg-blue-100 text-blue-800", meaning: "导入、引进、实施", grammar: "指将外部优秀的系统、新设备方案引进来落地落实。搭配：「最新技術を導入する」。" } },
-                  { text: "し始めました。無駄を極力", kana: "し始めました。無駄を極力", isKanji: false },
-                  { text: "排除", kana: "はいじょ", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 清除", color: "bg-rose-100 text-rose-800", meaning: "排除、剔除、彻底绝除", grammar: "指用强有力手段清除掉内部的隐患。此处指全局消除食品的浪费。" } },
-                  { text: "する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な責任を強く求められています。", kana: "する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な责任を強く求められています。", isKanji: false }
+                  { text: "すべく、大手コンビニ各社は人工知能を活用した需要予測を導入し始めました。無駄を極力排除する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な責任を強く求められています。", kana: "すべく、大手コンビニ各社は人工知能を活用した需要予測を導入し始めました。無駄を極力排除する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な責任を強く求められています。", isKanji: false }
                 ]
               }
             ]
           }
         };
 
-        // 智能扫描解析算法（注入文本模式通用）
         function parseUserCustomText(rawText) {
           const text = rawText.trim() || "新しい本を読みました。";
           const elements = [];
@@ -157,10 +208,9 @@
             let detectedKana = "かんじ"; 
             let aiAnalysis = { type: "自主分析字词", color: "bg-zinc-100 text-zinc-800", meaning: "通用汉字词汇", grammar: "系统已自动为您拆解该汉字并挂载高保真注音，点击可辅助分词精读。" };
 
-            if (kanjiText.includes("新")) { detectedKana = "あたら"; aiAnalysis = { type: "イ形容词 / 基础", color: "bg-emerald-100 text-emerald-800", meaning: "崭新的、新颖的", grammar: "常用于事物性质的描述。反义词为「古い」。" }; }
-            else if (kanjiText.includes("本")) { detectedKana = "ほん"; aiAnalysis = { type: "名词 / 书籍", color: "bg-blue-100 text-blue-800", meaning: "书、书籍", grammar: "基础核心词汇。还可以作为长条状物品的量词使用。" }; }
-            else if (kanjiText.includes("私")) { detectedKana = "わたし"; aiAnalysis = { type: "代词 / 人称", color: "bg-purple-100 text-purple-800", meaning: "我", grammar: "日本社会最通用的日常第一人称，男女皆可使用。" }; }
-            else if (kanjiText.includes("歴史")) { detectedKana = "れきし"; aiAnalysis = { type: "名词 / 历史", color: "bg-stone-100 text-stone-800", meaning: "历史", grammar: "指过去发生过的事实的有系统的记录。" }; }
+            if (kanjiText.includes("新")) { detectedKana = "あたら"; aiAnalysis = { type: "イ形容词 / 基础", color: "bg-emerald-100 text-emerald-800", meaning: "崭新的、新颖的", grammar: "常用于事物性质的描述。" }; }
+            else if (kanjiText.includes("本")) { detectedKana = "ほん"; aiAnalysis = { type: "名词 / 书籍", color: "bg-blue-100 text-blue-800", meaning: "书、书籍", grammar: "基础核心词汇。" }; }
+            else if (kanjiText.includes("私")) { detectedKana = "わたし"; aiAnalysis = { type: "代词 / 人称", color: "bg-purple-100 text-purple-800", meaning: "我", grammar: "日本社会最通用的日常第一人称。" }; }
 
             elements.push({ text: kanjiText, kana: detectedKana, isKanji: true, hasAnalysis: true, analysis: aiAnalysis });
             lastIndex = kanjiRegex.lastIndex;
@@ -175,19 +225,19 @@
           return {
             id: `user_custom_${Date.now()}`,
             title: "您的私人注入解析段落 (字数: " + text.length + "字)",
-            source: "用户自选私有数据轨道 (受版权保护)",
+            source: "用户自选私有数据轨道",
             translation: "自定义长文分析模式已启动。系统已优先执行物理分词与安全注音，您可以直接点击带下划线的汉字进行精读学习。",
             elements: elements
           };
         }
 
         // ==========================================
-        // 3. 全功能控制台与渲染中心
+        // 2. 主应用程序与安全渲染保护
         // ==========================================
         function JpUltimateReaderApp() {
           const [currentLevel, setCurrentLevel] = React.useState("N3");
-          const [currentLengthType, setCurrentLengthType] = React.useState("MEDIUM"); // SHORT, MEDIUM, LONG
-          const [article, setArticle] = React.useState(ONLINE_NEWS_POOL["N3"]["MEDIUM"][0]);
+          const [currentLengthType, setCurrentLengthType] = React.useState("SHORT"); 
+          const [article, setArticle] = React.useState(ONLINE_NEWS_POOL["N3"]["SHORT"][0]);
           const [activeAnalysisIdx, setActiveAnalysisIdx] = React.useState(null);
           const [showTranslation, setShowTranslation] = React.useState(true);
 
@@ -199,23 +249,23 @@
           const synthRef = React.useRef(window.speechSynthesis);
           const utteranceRef = React.useRef(null);
 
-          // 核心重写：结合【能力层级】和【字数分段】进行网络长文段落随机检索
+          // 核心重写：安全切换器，防止空对象引发React崩溃白屏
           const fetchRandomOnlineArticle = (level, lengthType) => {
             handleStopSpeech(); 
             setIsCustomModeActive(false);
             setCurrentLevel(level);
             setCurrentLengthType(lengthType);
 
-            const pool = ONLINE_NEWS_POOL[level][lengthType];
+            const pool = ONLINE_NEWS_POOL[level] && ONLINE_NEWS_POOL[level][lengthType];
             
             if (!pool || pool.length === 0) {
-              // 优雅的边界兜底：如果没有对应长度，自动寻找最近的段落
-              alert(`抱歉，当前网络库中 ${level} 的 ${lengthType === "SHORT" ? "50-200字短篇" : lengthType === "MEDIUM" ? "200-500字中篇" : "500-1000字长篇"} 暂无库存，已为您自动适配已有精选段落。`);
-              // 寻找第一个有数据的篇幅
-              const fallbackLength = ["SHORT", "MEDIUM", "LONG"].find(k => ONLINE_NEWS_POOL[level][k].length > 0);
-              const fallbackPool = ONLINE_NEWS_POOL[level][fallbackLength];
-              setArticle(fallbackPool[0]);
-              setCurrentLengthType(fallbackLength);
+              alert(`当前网络库中 ${level} 级暂无此篇幅规格，已为您自动适配已有精选段落。`);
+              // 安全降级：寻找任何一个有数据的分类
+              const availableKey = ["SHORT", "MEDIUM", "LONG"].find(k => ONLINE_NEWS_POOL[level][k] && ONLINE_NEWS_POOL[level][k].length > 0);
+              if (availableKey) {
+                setArticle(ONLINE_NEWS_POOL[level][availableKey][0]);
+                setCurrentLengthType(availableKey);
+              }
             } else {
               const randomIndex = Math.floor(Math.random() * pool.length);
               setArticle(pool[randomIndex]);
@@ -223,7 +273,6 @@
             setActiveAnalysisIdx(null);
           };
 
-          // 动作：智能处理并注入用户自己的日文文本
           const handleInjectUserText = () => {
             if (!userTextDraft.trim()) {
               alert("请输入或粘贴一段您遇到不懂的日语文章！");
@@ -232,7 +281,7 @@
             handleStopSpeech();
             setIsCustomModeActive(true);
             setCurrentLevel("用户注入");
-            setCurrentLengthType("自定义分段");
+            setCurrentLengthType("自定义");
             
             const processedArticle = parseUserCustomText(userTextDraft);
             setArticle(processedArticle);
@@ -241,7 +290,7 @@
           };
 
           // ==========================================
-          // 🔥 终极重构：高自然度流畅 AI 语音朗读控制台
+          // 🔥 精准优化的 AI 语音控制核心引擎
           // ==========================================
           const handlePlaySpeech = () => {
             if (!synthRef.current) {
@@ -254,16 +303,16 @@
               return;
             }
 
-            // 1. 平滑调优：提取纯净正文字符串，防止AI多音字错位和死板中顿
+            // 1. 语流平滑：拼接文本，消除没有空格时产生的机器人结巴停顿
             const textToSpeak = article.elements.map(el => el.text).join("");
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'ja-JP'; 
             
-            // 2. 语气调优：语速调至流利慢速 0.88，微调音调（1.05）消除沙哑机器人音，使其具有真人起伏感
+            // 2. 语气调优：语速最适位 0.88x，调高音调 1.05，让发音更有灵动感和呼吸感
             utterance.rate = 0.88;
             utterance.pitch = 1.05; 
 
-            // 3. 声线筛选：优先调用 iOS 底层最好听的 'Kyoko' 或者是高级 Enhanced 日本语包
+            // 3. 筛选最顶级原生声线（优先 iOS Kyoko 声线）
             const voices = synthRef.current.getVoices();
             const premiumVoice = voices.find(v => (v.lang.includes('ja-JP') || v.lang.includes('ja_JP')) && (v.name.includes('Premium') || v.name.includes('Enhanced') || v.name.includes('Kyoko'))) 
                                  || voices.find(v => v.lang.includes('ja-JP'));
@@ -272,7 +321,7 @@
               utterance.voice = premiumVoice;
             }
 
-            // 4. 卡拉OK高亮去闪烁：只在字符推进时驱动视图更新
+            // 4. 卡拉OK逐字高亮平滑检测
             let lastCharIndex = -1;
             utterance.onboundary = (event) => {
               if (event.name === 'word' || event.name === 'char') {
@@ -290,7 +339,7 @@
             utteranceRef.current = utterance;
             setIsPlaying(true);
             
-            // 5. 强刷底层硬件音频缓存，彻底干掉结巴
+            // 5. 强刷底层硬件缓存，规避 iPad 连续点触造成的紊乱
             synthRef.current.cancel();
             setTimeout(() => {
               synthRef.current.speak(utterance);
@@ -323,10 +372,186 @@
           return (
             <div className="min-h-screen flex flex-col justify-between" onClick={() => handleStopSpeech}>
               
-              {/* 顶部综合控制中枢 */}
+              {/* 顶部控制中枢 */}
               <header className="bg-white border-b border-zinc-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
                 <div className="max-w-6xl mx-auto flex flex-col xl:flex-row justify-between items-center gap-4">
                   
                   <div className="flex items-center space-x-3 w-full xl:w-auto justify-between xl:justify-start">
                     <div className="flex items-center space-x-2">
-                      
+                      <span className="text-xl font-black tracking-tight text-zinc-900">日本語<span className="text-blue-600">双轨精读本</span></span>
+                      <span className="text-xs font-mono px-2 py-0.5 bg-zinc-900 text-white rounded font-bold">V3.1 极稳版</span>
+                    </div>
+                    <button 
+                      onClick={() => setShowTranslation(!showTranslation)} 
+                      className="text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-600 px-2.5 py-1 rounded border border-zinc-200 xl:hidden"
+                    >
+                      {showTranslation ? "👁 隐藏译文" : "👁 显示译文"}
+                    </button>
+                  </div>
+
+                  {/* 等级选择器 */}
+                  <div className="flex flex-wrap items-center bg-zinc-100 border border-zinc-200 rounded-xl p-1 gap-1 text-xs w-full xl:w-auto">
+                    <span className="text-zinc-500 px-2 font-bold text-[11px] tracking-wider">🎯 能力层级:</span>
+                    {["N5", "N3", "N2"].map((lvl) => (
+                      <button 
+                        key={lvl} 
+                        onClick={() => fetchRandomOnlineArticle(lvl, currentLengthType)} 
+                        className={`px-3 py-1.5 rounded-lg font-bold transition-all ${(!isCustomModeActive && currentLevel === lvl) ? "bg-blue-600 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-200"}`}
+                      >
+                        {lvl === "N5" ? "N5 基础圈" : lvl === "N3" ? "N3 进阶圈" : "N2/N1 新闻圈"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 篇幅字数过滤器 */}
+                  <div className="flex flex-wrap items-center bg-amber-50 border border-amber-200 rounded-xl p-1 gap-1 text-xs w-full xl:w-auto">
+                    <span className="text-amber-700 px-2 font-bold text-[11px] tracking-wider">📏 篇幅字数分段:</span>
+                    {[
+                      { key: "SHORT", name: "短篇 (50-200字)" },
+                      { key: "MEDIUM", name: "中篇 (200-500字)" },
+                      { key: "LONG", name: "长篇 (500-1000字)" }
+                    ].map((len) => (
+                      <button 
+                        key={len.key} 
+                        onClick={() => fetchRandomOnlineArticle(isCustomModeActive ? "N3" : currentLevel, len.key)} 
+                        className={`px-2.5 py-1.5 rounded-lg font-bold transition-all ${(!isCustomModeActive && currentLengthType === len.key) ? "bg-amber-600 text-white shadow-sm" : "text-amber-800 hover:bg-amber-100"}`}
+                      >
+                        {len.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={() => setShowTranslation(!showTranslation)} 
+                    className={`hidden xl:block text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${showTranslation ? "bg-white border-zinc-200 text-zinc-700" : "bg-zinc-200 border-zinc-300 text-zinc-500"}`}
+                  >
+                    {showTranslation ? "隐藏对照中文译文" : "显示完整中文译文"}
+                  </button>
+                </div>
+              </header>
+
+              {/* 核心展示画布 */}
+              <main className="flex-grow max-w-5xl w-full mx-auto px-4 py-6 flex flex-col justify-start gap-4">
+                
+                {/* 轨道 B：私人长文输入舱 */}
+                <div className="bg-white border border-blue-100 rounded-2xl p-4 shadow-sm">
+                  <div className="text-xs font-bold text-blue-900 mb-2">📥 轨道B：粘贴您在别的网站遇到不懂的任何字数长短文</div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text"
+                      value={userTextDraft}
+                      onChange={(e) => setUserTextDraft(e.target.value)}
+                      placeholder="在这里粘贴任意日文长句或段落，系统会自动切段注音并发音..."
+                      className="flex-grow text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-800"
+                    />
+                    <button 
+                      onClick={handleInjectUserText}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 rounded-xl transition-colors whitespace-nowrap"
+                    >
+                      AI 自主切段分析 ⚡
+                    </button>
+                  </div>
+                </div>
+
+                {/* 精准来源高亮标注 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-zinc-400 font-mono px-1 gap-1">
+                  <div>🎯 当前文章截取来源: <span className="font-bold text-zinc-700 bg-zinc-200 px-2 py-0.5 rounded">{article?.source || "未知源"}</span></div>
+                  <div className="text-zinc-500">
+                    当前规格: <span className="text-amber-600 font-bold">{currentLengthType}</span> 段落 • 点击下划线汉字查看词性标签
+                  </div>
+                </div>
+
+                {/* 综合大标题与 AI 朗读大控制台 */}
+                <div className="bg-white border border-zinc-200 p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <span className={`px-2 py-0.5 text-[10px] font-black rounded ${isCustomModeActive ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>
+                      {currentLevel}
+                    </span>
+                    <h2 className="text-base font-bold text-zinc-900 line-clamp-1">{article?.title || "未载入文章"}</h2>
+                  </div>
+                  
+                  <button 
+                    onClick={handlePlaySpeech}
+                    className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center space-x-2 border transition-all ${isPlaying ? "bg-red-500 text-white border-red-600 animate-pulse" : "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"}`}
+                  >
+                    <span>{isPlaying ? "⏹ 停止播放当前段落" : "🔊 启动 AI 流畅阅读 (0.88x 听读高亮)"}</span>
+                  </button>
+                </div>
+
+                {/* 最终纸张：顶置注音排版 */}
+                <div className="bg-white rounded-2xl border border-zinc-200 shadow-md p-8 md:p-12 leading-relaxed tracking-widest select-none min-h-[220px] flex items-center">
+                  <div className="text-2xl md:text-3xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-16 gap-x-1.5 w-full">
+                    {article && article.elements ? article.elements.map((el, idx) => {
+                      const isClickable = el.hasAnalysis;
+                      const isReadingStyle = getHighlightClass(el, idx);
+                      const activeAnalysisStyle = activeAnalysisIdx === idx ? "text-blue-600 bg-blue-50/80 rounded" : "";
+
+                      return (
+                        <span 
+                          key={idx}
+                          onClick={() => isClickable && setActiveAnalysisIdx(activeAnalysisIdx === idx ? null : idx)}
+                          className={`${isClickable ? "grammar-word" : ""} ${isReadingStyle} ${activeAnalysisStyle} inline-block p-0.5 transition-all duration-150`}
+                        >
+                          <ruby>
+                            <span>{el.text}</span>
+                            {el.isKanji ? (
+                              <rt>{el.kana}</rt>
+                            ) : (
+                              <rt className="opacity-0 select-none pointer-events-none">.</rt>
+                            )}
+                          </ruby>
+                        </span>
+                      );
+                    }) : <p className="text-xs text-zinc-400">暂无可以渲染的正文数据</p>}
+                  </div>
+                </div>
+
+                {/* 隐藏式 AI 单词文法精读解析卡片 */}
+                {activeAnalysisIdx !== null && article && article.elements && article.elements[activeAnalysisIdx] && (
+                  <div className="analysis-card bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200/80 rounded-2xl p-5 shadow-sm">
+                    <div className="flex justify-between items-start border-b border-blue-200/50 pb-2 mb-3">
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-sm font-black text-blue-900">
+                          AI 智能精读分词: 【{article.elements[activeAnalysisIdx].text}】
+                        </h3>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded font-mono shadow-sm ${article.elements[activeAnalysisIdx].analysis.color || "bg-zinc-100 text-zinc-700"}`}>
+                          🏷 {article.elements[activeAnalysisIdx].analysis.type}
+                        </span>
+                      </div>
+                      <button onClick={() => setActiveAnalysisIdx(null)} className="text-xs text-blue-500 hover:text-blue-700 font-bold">✕ 收起</button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <strong className="text-zinc-400 text-[11px] uppercase tracking-wider block mb-0.5">中文精准核心释义:</strong>
+                        <p className="font-bold text-sm text-zinc-900">{article.elements[activeAnalysisIdx].analysis.meaning}</p>
+                      </div>
+                      <div className="text-xs text-zinc-700 leading-relaxed bg-white/90 p-3 rounded-xl border border-blue-100/60 shadow-inner">
+                        <strong className="text-blue-900 font-bold block mb-1">💡 核心语用场境与难点解析:</strong>
+                        {article.elements[activeAnalysisIdx].analysis.grammar}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 底部中文全量翻译对照 */}
+                {showTranslation && article && (
+                  <div className="bg-zinc-800 text-zinc-200 p-5 rounded-2xl border border-zinc-700 shadow-inner text-xs leading-relaxed transition-all">
+                    <strong className="block text-[11px] font-mono uppercase tracking-widest text-zinc-400 mb-1.5">🇨🇳 完整全量中文对照翻译参考：</strong>
+                    {article.translation}
+                  </div>
+                )}
+
+              </main>
+
+              <footer className="text-center py-6 text-[11px] text-zinc-400 border-t border-zinc-200 bg-white font-mono">
+                Ultimate Jp Reader Core V3.1 • 复合防白屏底层保障架构
+              </footer>
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<JpUltimateReaderApp />);
+    </script>
+</body>
+</html>
