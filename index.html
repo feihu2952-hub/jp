@@ -1,557 +1,1016 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日本語長文精読本（稳健不白屏终极版）</title>
-    <!-- 引入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style>
-        body { background-color: #F4F4F5; font-family: 'Helvetica Neue', 'Noto Sans JP', 'PingFang SC', sans-serif; }
-        ruby { 
-            ruby-position: over;
-            ruby-align: center;
-        }
-        rt {
-            font-size: 0.55em;
-            letter-spacing: 0.05em;
-            padding-bottom: 0.35rem;
-            color: #71717A;
-            font-family: monospace;
-            user-select: none;
-        }
-        .grammar-word {
-            border-bottom: 2px dashed #2563EB;
-            cursor: pointer;
-            padding-bottom: 1px;
-            transition: all 0.2s ease;
-        }
-        .grammar-word:hover {
-            color: #2563EB;
-            background-color: rgba(37, 99, 235, 0.05);
-        }
-        .speech-reading-highlight {
-            color: #2563EB !important;
-            background-color: rgba(59, 130, 246, 0.12);
-            border-radius: 4px;
-        }
-        .analysis-card {
-            animation: slideDown 0.25s ease-out;
-        }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本語精読本</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@400;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --ink: #1a1a2e;
+    --paper: #faf8f4;
+    --accent: #c8451a;
+    --accent2: #2563eb;
+    --muted: #6b6b7a;
+    --border: #e2ddd6;
+    --card: #ffffff;
+    --active-bg: rgba(200,69,26,0.08);
+    --reading-bg: rgba(37,99,235,0.12);
+    --tag-bg: #f0ede8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 56px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+  }
+  .logo {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .logo span { color: var(--accent); }
+  .header-sep { flex: 1; }
+
+  .level-group {
+    display: flex;
+    gap: 4px;
+    background: var(--tag-bg);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .level-btn {
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .level-btn:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
+  .level-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(200,69,26,0.25);
+  }
+
+  .read-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 1.5px solid currentColor;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .read-btn.off { color: var(--accent2); background: rgba(37,99,235,0.05); }
+  .read-btn.off:hover { background: rgba(37,99,235,0.12); }
+  .read-btn.on { color: #fff; background: var(--accent2); border-color: var(--accent2); animation: pulse-blue 1.4s infinite; }
+
+  @keyframes pulse-blue {
+    0%,100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+  }
+
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 24px 60px;
+  }
+
+  .article-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .meta-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .badge-level { background: var(--accent); color: #fff; }
+  .badge-count { background: var(--tag-bg); color: var(--muted); border: 1px solid var(--border); }
+  .article-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .passage-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 44px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+    min-height: 180px;
+  }
+
+  .passage-text {
+    line-height: 3.8;
+    font-size: 22px;
+    font-family: 'Noto Serif JP', serif;
+    color: var(--ink);
+    letter-spacing: 0.06em;
+    word-break: break-all;
+  }
+
+  ruby {
+    ruby-position: over;
+    ruby-align: center;
+    display: inline-ruby;
+  }
+  rt {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    text-align: center;
+    padding-bottom: 2px;
+  }
+  rt.ghost {
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .word-clickable {
+    cursor: pointer;
+    border-bottom: 1.5px dashed rgba(200,69,26,0.5);
+    border-radius: 3px;
+    transition: background 0.15s;
+  }
+  .word-clickable:hover { background: var(--active-bg); }
+  .word-active { background: var(--active-bg) !important; color: var(--accent); }
+
+  .reading-hi {
+    background: var(--reading-bg);
+    border-radius: 4px;
+    color: var(--accent2);
+  }
+
+  .analysis-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #fff8f5 100%);
+    border: 1px solid #dbe4ff;
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 20px;
+    animation: slideDown 0.2s ease-out;
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .analysis-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .analysis-word {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .analysis-tag {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--tag-bg);
+    color: var(--muted);
+    margin-left: 10px;
+  }
+  .close-btn {
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .close-btn:hover { background: rgba(0,0,0,0.07); }
+  .analysis-meaning {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .analysis-note {
+    font-size: 12.5px;
+    color: #444;
+    line-height: 1.75;
+    background: rgba(255,255,255,0.8);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+
+  .translation-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .trans-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: 8px;
+    padding: 5px 12px;
+    transition: all 0.15s;
+  }
+  .trans-toggle:hover { background: var(--tag-bg); }
+  .trans-box {
+    background: var(--ink);
+    color: #e8e4dc;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    line-height: 1.85;
+    margin-bottom: 20px;
+    animation: slideDown 0.2s ease-out;
+  }
+  .trans-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .input-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .input-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .input-row { display: flex; gap: 10px; }
+  .text-input {
+    flex: 1;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .text-input:focus { border-color: var(--accent2); }
+  .submit-btn {
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .submit-btn:hover { background: #a83615; }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .nav-btn {
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-btn:hover { background: var(--tag-bg); color: var(--ink); }
+
+  .speed-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+  }
+  .speed-wrap input[type=range] { width: 80px; accent-color: var(--accent2); }
+
+  @media (max-width: 600px) {
+    .passage-card { padding: 24px 18px; }
+    .passage-text { font-size: 18px; line-height: 4; }
+    rt { font-size: 10px; }
+  }
+</style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        // ==========================================
-        // 1. 严格补全的、带来源标注和字数分段的数据库
-        // ==========================================
-        const ONLINE_NEWS_POOL = {
-          N5: {
-            SHORT: [
-              {
-                title: "日本の冬と美味しいみかん (短篇篇幅)",
-                source: "読売新聞 新闻简易版授权引流",
-                translation: "日本的冬天非常寒冷。在家里，大家常常一边坐在被炉里，一边吃着美味的蜜柑。这是一件非常幸福的事情。",
-                elements: [
-                  { text: "日本", kana: "にほん", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 国名", color: "bg-blue-100 text-blue-800", meaning: "日本", grammar: "最基础的专有名词。注意：作国名时一般读作「にほん」。" } },
-                  { text: "の", kana: "の", isKanji: false },
-                  { text: "冬", kana: "ふゆ", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 四季", color: "bg-teal-100 text-teal-800", meaning: "冬天", grammar: "四季核心词汇之一。" } },
-                  { text: "はとても寒いです。家の中出、みんなで美味しいみかんを食べます。とても", kana: "はとても寒いです。家の中出、みんなで美味しいみかんを食べます。とても", isKanji: false },
-                  { text: "幸", kana: "しあわ", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词 / 心理", color: "bg-purple-100 text-purple-800", meaning: "幸福的、美满的", grammar: "表示内心十分满足的状态。" } },
-                  { text: "せです。", kana: "せです。", isKanji: false }
-                ]
-              }
-            ],
-            MEDIUM: [
-              {
-                title: "日本語の勉強と毎日の生活 (中篇篇幅)",
-                source: "国際日本語教育中心 教学素材",
-                translation: "我每天在学校学习日语。学校里有来自各个国家的留学生。大家一起练习日语，非常快乐。下课后，我会和朋友一起去买东西、吃晚饭。",
-                elements: [
-                  { text: "私", kana: "わたし", isKanji: true },
-                  { text: "は毎日学校で日本語を勉強します。学校にはいろいろな国の留学生がいます。みんなで日本語を", kana: "は毎日学校で日本語を勉強します。学校にはいろいろな国の留学生がいます。みんなで日本語を", isKanji: false },
-                  { text: "練習", kana: "れんしゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", color: "bg-orange-100 text-orange-800", meaning: "练习、反复训练", grammar: "用于体育、技能、语言的反复操练。" } },
-                  { text: "します。とても楽しいです。授業の後で、", kana: "します。とても楽しいです。授業の後で、", isKanji: false },
-                  { text: "友達", kana: "ともだち", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 社交", color: "bg-pink-100 text-pink-800", meaning: "朋友、友人", grammar: "日常高频交往词汇。" } },
-                  { text: "と一緒に買い物をしたり、ご飯を食べたりします。", kana: "と一緒に買い物をしたり、ご飯を食べたりします。", isKanji: false }
-                ]
-              }
-            ],
-            LONG: [
-              {
-                title: "日本の四季と地域のイベント (长篇篇幅)",
-                source: "日本观光厅 基础教材分段",
-                translation: "日本有春、夏、秋、冬四个季节。春天可以看樱花，夏天各地会举办热闹的祭典和烟花大会。秋天树叶变红，景色非常美丽。冬天很多地方会下雪，可以体验滑雪。每一个季节都有其独特的乐趣，欢迎大家来日本观光旅行。",
-                elements: [
-                  { text: "日本", kana: "にほん", isKanji: true },
-                  { text: "には春、夏、秋、冬の四つの季節があります。春には綺麗な桜を見ることができます。夏にはいろいろな場所で賑やかなお祭りや花火大会が開かれます。秋は木の葉が赤くなって、景色がとても美しいです。冬はたくさんの場所に雪が降りますから、スキーをすることができます。どの季節もそれぞれ違う楽しみ方があります。ぜひ日本へ遊びに来てください。", kana: "には春、夏、秋、冬の四つの季節があります。春には綺麗な桜を見ることができます。夏にはいろいろな場所で賑やかなお祭りや花火大会が開かれます。秋は木の葉が赤くなって、景色がとても美しいです。冬はたくさんの場所に雪が降りますから、スキーをすることができます。どの季節もそれぞれ違う楽しみ方があります。ぜひ日本へ遊びに来てください。", isKanji: false }
-                ]
-              }
-            ]
-          },
-          N3: {
-            SHORT: [
-              {
-                title: "日本の自動販売機 (短篇速读)",
-                source: "日本時事文化月刊 节选段落",
-                translation: "走在日本的街头，无论走到哪里都能看到自动贩卖机。这里面不仅有冷饮，甚至连热咖啡都有。",
-                elements: [
-                  { text: "街", kana: "まち", isKanji: true },
-                  { text: "を歩くと、どこにでも", kana: "を歩くと、どこにでも", isKanji: false },
-                  { text: "自動販売機", kana: "じどうはんばいき", isKanji: true, hasAnalysis: true, analysis: { type: "复合名词 / 社会", color: "bg-blue-100 text-blue-800", meaning: "自动贩卖机", grammar: "由「自動」＋「販売」＋「機」构成。" } },
-                  { text: "があります。冷たい飲み物", kana: "があります。冷たい飲み物", isKanji: false },
-                  { text: "だけでなく、", kana: "だけでなく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N3", color: "bg-amber-100 text-amber-800", meaning: "不仅……而且……", grammar: "【AだけでなくBも】基础核心句型。表示不受限于A，后项B顺势递进。" } },
-                  { text: "温かいコーヒーもあります。", kana: "温かいコーヒーもあります。", isKanji: false }
-                ]
-              }
-            ],
-            MEDIUM: [
-              {
-                title: "京都の古い町並みと観光ルール (中篇文化)",
-                source: "京都観光ナビ 官方文案切段引用",
-                translation: "在拥有漫长历史的京都，保存着许多古老的美丽街道。但是最近，由于国际游客急剧增加，带来了一些关于垃圾扔放等礼仪方面的问题。因此，为了保护传统，京都市开始大力向海外宣传相关的观光守则。",
-                elements: [
-                  { text: "歴史", kana: "れきし", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 历史", color: "bg-stone-100 text-stone-800", meaning: "历史", grammar: "核心词汇。常组成「歴史がある」（有历史渊源）。" } },
-                  { text: "のある京都には、古い美しい", kana: "のある京都には、古い美しい", isKanji: false },
-                  { text: "町並", kana: "まちなみ", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 建筑", color: "bg-emerald-100 text-emerald-800", meaning: "市容、街道的排列面貌", grammar: "指沿街整齐排列的店铺、住宅所构成的整体景观。" } },
-                  { text: "みが残っています。しかし最近、外国からの", kana: "みが残っています。しかし最近、外国からの", isKanji: false },
-                  { text: "観光客", kana: "かんこうきゃく", isKanji: true, hasAnalysis: true, analysis: { type: "名词 / 旅游业", color: "bg-teal-100 text-teal-800", meaning: "观光客、国际旅客", grammar: "「観光」与「客」的复合体。" } },
-                  { text: "が急増し、ゴミの捨て方などのマナーが問題になっています。そのため、伝統を守る", kana: "が急増し、ゴミの捨て方などのマナーが问题になっています。そのため、伝統を守る", isKanji: false },
-                  { text: "べく、", kana: "べく、", isKanji: false, hasAnalysis: true, analysis: { type: "核心文法 / N2过渡", color: "bg-purple-100 text-purple-800", meaning: "为了…… / 想要……", grammar: "【A べく B】书面语目的表现。接在动词终止形后。" } },
-                  { text: "京都市は新しいルールをアピールしています。", kana: "京都市は新しいルールをアピールしています。", isKanji: false }
-                ]
-              }
-            ],
-            LONG: [
-              {
-                title: "日本の技術革新と環境問題 (长篇深度)",
-                source: "経済産業省 公开报告节选",
-                translation: "伴随着科学技术的进步，我们的生活变得极其便利。特别是智能手机和AI机器人的引入，给产业界带来了巨大的变革。但另一方面，伴随而来的电力消耗增加和电子垃圾排放等全新的环境课题也浮出水面。为了留住美丽的地球，我们在推进技术开发的同时，必须加速落实绿色环保的举措。",
-                elements: [
-                  { text: "科学", kana: "かがく", isKanji: true },
-                  { text: "技術の進歩に伴い、私たちの生活は非常に便利になりました。特にスマートフォンやAIロボットの", kana: "技術の進歩に伴い、私たちの生活は非常に便利になりました。特にスマートフォンやAIロボットの", isKanji: false },
-                  { text: "導入", kana: "どうにゅう", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词", color: "bg-blue-100 text-blue-800", meaning: "导入、引进", grammar: "引入新的系统或技术。" } },
-                  { text: "は、産業界に大きな変革をもたらしています。しかしその一方で、消費電力の増加や、電子廃棄物の問題など、新しい環境課題も浮き彫りになってきました。美しい地球を守り続けるためには、技術開発を進めるのと同時に、環境に配慮した取り組みを加速させていく必要があります。", kana: "は、産業界に大きな変革をもたらしています。しかしその一方で、消費電力の増加や、電子廃棄物の問題など、新しい環境課題も浮き彫りになってきました。美しい地球を守り続けるためには、技術開発を進めるのと同時に、環境に配慮した取り組みを加速させていく必要があります。", isKanji: false }
-                ]
-              }
-            ]
-          },
-          N2: {
-            SHORT: [
-              {
-                title: "働き方の多様化 (短篇时事)",
-                source: "厚生労働省 白皮书摘要",
-                translation: "近年来，远程办公作为一种不用去公司就能工作的多样化新模式在各大企业迅速普及开来。",
-                elements: [
-                  { text: "近年", kana: "きんねん", isKanji: true },
-                  { text: "、企業の間では会社に出社せずに働くリモートワークなど、", kana: "、企業の間では会社に出社せずに働くリモートワークなど、", isKanji: false },
-                  { text: "多様", kana: "たよう", isKanji: true, hasAnalysis: true, analysis: { type: "ナ形容词", color: "bg-indigo-100 text-indigo-800", meaning: "多样化的", grammar: "表示形式或种类多种多样。" } },
-                  { text: "な働き方が急速に普及しています。", kana: "な働き方が急速に普及しています。", isKanji: false }
-                ]
-              }
-            ],
-            MEDIUM: [
-              {
-                title: "再生可能エネルギーの現状 (中篇经济)",
-                source: "日本エネルギー経済研究所 报告",
-                translation: "关于太阳能和风力等可再生能源，虽然从削减二氧化碳的角度出发受到了极大的关注，但由于其发电量容易受到天气的影响，如何实现电网的稳定供电依然是一项严峻的课题。",
-                elements: [
-                  { text: "太陽光", kana: "たいようこう", isKanji: true },
-                  { text: "や風力などの再生可能エネルギーは、二酸化炭素削減の観点から注目を集めているものの、天候によって発電量が左右されやすいため、安定した電力供給をどのように維持していくかが今後の大きな課題となっています。", kana: "や風力などの再生可能エネルギーは、二酸化炭素削減の観点から注目を集めているものの、天候によって発電量が左右されやすいため、安定した電力供給をどのように維持していくかが今後の大きな課題となっています。", isKanji: false }
-                ]
-              }
-            ],
-            LONG: [
-              {
-                title: "食品ロス削減に向けた新しい取り組み (长篇重型时事)",
-                source: "NHK 真实焦点新闻改写",
-                translation: "为了减少大量废弃食品引发的“食品损耗”问题，各大便利店企业开始利用人工智能（AI）来精准预测需求。此举旨在根据气温和当天的活动数据来调整进货量，从而尽可能杜绝浪费现象。根据环境省的调查，日本每年的食品废弃量高达数百万吨。面对这一现状，企业不仅要追求利润，更被强烈要求承担起减少环境负荷的社会责任。",
-                elements: [
-                  { text: "大量", kana: "たいりょう", isKanji: true },
-                  { text: "に", kana: "に", isKanji: false },
-                  { text: "廃棄", kana: "はいき", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 环境", color: "bg-red-100 text-red-800", meaning: "废弃、大规模处理", grammar: "常用于工业废料、过期食品的大规模抛弃。" } },
-                  { text: "される「食品ロス」を", kana: "される「食品ロス」を", isKanji: false },
-                  { text: "削減", kana: "さくげん", isKanji: true, hasAnalysis: true, analysis: { type: "名・サ变动词 / 运营", color: "bg-orange-100 text-orange-800", meaning: "削减、压缩、缩减", grammar: "指将不必要的数据、开销、损耗从原本的基础上有意识地裁减掉。" } },
-                  { text: "すべく、大手コンビニ各社は人工知能を活用した需要予測を導入し始めました。無駄を極力排除する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な責任を強く求められています。", kana: "すべく、大手コンビニ各社は人工知能を活用した需要予測を導入し始めました。無駄を極力排除する狙いです。環境省の調査によると、日本国内の年間廃棄量は数百万トンに達しており、企業は利益追求のみならず、環境負荷を抑える社会的な責任を強く求められています。", isKanji: false }
-                ]
-              }
-            ]
-          }
-        };
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">精<span>読</span>本</div>
+    <div class="level-group" id="levelGroup">
+      <button class="level-btn" data-level="0" onclick="selectLevel(0)">入門 ≤50字</button>
+      <button class="level-btn" data-level="1" onclick="selectLevel(1)">初級 ≤150字</button>
+      <button class="level-btn active" data-level="2" onclick="selectLevel(2)">中級 ≤350字</button>
+      <button class="level-btn" data-level="3" onclick="selectLevel(3)">上級 ≤700字</button>
+    </div>
+    <div class="header-sep"></div>
+    <div class="speed-wrap">
+      <span>速度</span>
+      <input type="range" id="speedRange" min="0.5" max="1.5" step="0.1" value="0.85" oninput="updateSpeed(this.value)">
+      <span id="speedVal">0.85×</span>
+    </div>
+    <button class="read-btn off" id="readBtn" onclick="toggleRead()">
+      <span id="readIcon">▶</span>
+      <span id="readLabel">AI 朗読</span>
+    </button>
+  </div>
+</header>
 
-        function parseUserCustomText(rawText) {
-          const text = rawText.trim() || "新しい本を読みました。";
-          const elements = [];
-          const kanjiRegex = /[\u4e00-\u9faf]+/g;
-          let lastIndex = 0;
-          let match;
+<main class="main">
 
-          while ((match = kanjiRegex.exec(text)) !== null) {
-            const matchIndex = match.index;
-            if (matchIndex > lastIndex) {
-              const kanaChunk = text.substring(lastIndex, matchIndex);
-              kanaChunk.split("").forEach(char => {
-                elements.push({ text: char, kana: char, isKanji: false });
-              });
-            }
+  <div class="input-section">
+    <span class="input-label">📥 粘贴任意日文段落，自动注音分析</span>
+    <div class="input-row">
+      <input class="text-input" id="userInput" type="text" placeholder="在此粘贴日文文章…">
+      <button class="submit-btn" onclick="loadUserText()">解析 ⚡</button>
+    </div>
+  </div>
 
-            const kanjiText = match[0];
-            let detectedKana = "かんじ"; 
-            let aiAnalysis = { type: "自主分析字词", color: "bg-zinc-100 text-zinc-800", meaning: "通用汉字词汇", grammar: "系统已自动为您拆解该汉字并挂载高保真注音，点击可辅助分词精读。" };
+  <div class="article-meta" id="articleMeta">
+    <span class="meta-badge badge-level" id="badgeLevel">中級</span>
+    <span class="meta-badge badge-count" id="badgeCount">● 字</span>
+    <span class="article-title" id="articleTitle">記事タイトル</span>
+  </div>
 
-            if (kanjiText.includes("新")) { detectedKana = "あたら"; aiAnalysis = { type: "イ形容词 / 基础", color: "bg-emerald-100 text-emerald-800", meaning: "崭新的、新颖的", grammar: "常用于事物性质的描述。" }; }
-            else if (kanjiText.includes("本")) { detectedKana = "ほん"; aiAnalysis = { type: "名词 / 书籍", color: "bg-blue-100 text-blue-800", meaning: "书、书籍", grammar: "基础核心词汇。" }; }
-            else if (kanjiText.includes("私")) { detectedKana = "わたし"; aiAnalysis = { type: "代词 / 人称", color: "bg-purple-100 text-purple-800", meaning: "我", grammar: "日本社会最通用的日常第一人称。" }; }
+  <div class="nav-row">
+    <button class="nav-btn" onclick="prevArticle()">← 前の記事</button>
+    <button class="nav-btn" onclick="nextArticle()">次の記事 →</button>
+  </div>
 
-            elements.push({ text: kanjiText, kana: detectedKana, isKanji: true, hasAnalysis: true, analysis: aiAnalysis });
-            lastIndex = kanjiRegex.lastIndex;
-          }
+  <div class="passage-card">
+    <div class="passage-text" id="passageText"></div>
+  </div>
 
-          if (lastIndex < text.length) {
-            text.substring(lastIndex).split("").forEach(char => {
-              elements.push({ text: char, kana: char, isKanji: false });
-            });
-          }
+  <div class="analysis-card" id="analysisCard" style="display:none">
+    <div class="analysis-head">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="analysis-word" id="anaWord"></span>
+        <span class="analysis-tag" id="anaTag"></span>
+      </div>
+      <button class="close-btn" onclick="closeAnalysis()">✕</button>
+    </div>
+    <div class="analysis-meaning" id="anaMeaning"></div>
+    <div class="analysis-note" id="anaNote"></div>
+  </div>
 
-          return {
-            id: `user_custom_${Date.now()}`,
-            title: "您的私人注入解析段落 (字数: " + text.length + "字)",
-            source: "用户自选私有数据轨道",
-            translation: "自定义长文分析模式已启动。系统已优先执行物理分词与安全注音，您可以直接点击带下划线的汉字进行精读学习。",
-            elements: elements
-          };
-        }
+  <div class="translation-row">
+    <button class="trans-toggle" onclick="toggleTrans()">
+      <span>🇨🇳</span>
+      <span id="transToggleLabel">显示中文译文</span>
+    </button>
+  </div>
+  <div class="trans-box" id="transBox" style="display:none">
+    <span class="trans-label">中文对照翻译</span>
+    <span id="transText"></span>
+  </div>
 
-        // ==========================================
-        // 2. 主应用程序与安全渲染保护
-        // ==========================================
-        function JpUltimateReaderApp() {
-          const [currentLevel, setCurrentLevel] = React.useState("N3");
-          const [currentLengthType, setCurrentLengthType] = React.useState("SHORT"); 
-          const [article, setArticle] = React.useState(ONLINE_NEWS_POOL["N3"]["SHORT"][0]);
-          const [activeAnalysisIdx, setActiveAnalysisIdx] = React.useState(null);
-          const [showTranslation, setShowTranslation] = React.useState(true);
+</main>
 
-          const [userTextDraft, setUserTextDraft] = React.useState("");
-          const [isCustomModeActive, setIsCustomModeActive] = React.useState(false);
+<script>
+const LEVELS = [
+  { name: "入門", label: "入門 ≤50字", maxChars: 50 },
+  { name: "初級", label: "初級 ≤150字", maxChars: 150 },
+  { name: "中級", label: "中級 ≤350字", maxChars: 350 },
+  { name: "上級", label: "上級 ≤700字", maxChars: 700 },
+];
 
-          const [isPlaying, setIsPlaying] = React.useState(false);
-          const [currentReadingCharIdx, setCurrentReadingCharIdx] = React.useState(-1);
-          const synthRef = React.useRef(window.speechSynthesis);
-          const utteranceRef = React.useRef(null);
+const ARTICLES = [
+  {
+    level: 0,
+    title: "今日の天気",
+    translation: "今天天气很好。天空是蓝色的，太阳很耀眼。我去了公园。",
+    tokens: [
+      { text:"今日", kana:"きょう", analysis:{tag:"名詞",meaning:"今天",note:"「今日」可読作「きょう」（口语）或「こんにち」（正式），日常会话中多用「きょう」。"} },
+      { text:"は" },
+      { text:"天気", kana:"てんき", analysis:{tag:"名詞",meaning:"天气",note:"「天気がいい」（天气好）是最常用搭配。"} },
+      { text:"が" },
+      { text:"いいです。" },
+      { text:"空", kana:"そら", analysis:{tag:"名詞",meaning:"天空",note:"「空が青い」（天空是蓝色的）高频句型。"} },
+      { text:"は" },
+      { text:"青", kana:"あお", analysis:{tag:"イ形容詞",meaning:"蓝色的",note:"颜色词「青い」。注意日语中「青」有时也泛指绿色（如「青信号」= 绿灯）。"} },
+      { text:"くて、" },
+      { text:"太陽", kana:"たいよう", analysis:{tag:"名詞",meaning:"太阳",note:"「太陽がまぶしい」= 太阳很耀眼。"} },
+      { text:"が" },
+      { text:"まぶしいです。" },
+      { text:"公園", kana:"こうえん", analysis:{tag:"名詞",meaning:"公园",note:"「公園に行く」去公园，「公園で遊ぶ」在公园玩。"} },
+      { text:"に" },
+      { text:"行", kana:"い", analysis:{tag:"動詞",meaning:"去",note:"「行く」的连用形「行き」→ 「行った」（过去式）。"} },
+      { text:"きました。" },
+    ]
+  },
+  {
+    level: 0,
+    title: "朝ごはん",
+    translation: "早上我吃了面包和鸡蛋。然后喝了牛奶。很好吃。",
+    tokens: [
+      { text:"朝", kana:"あさ", analysis:{tag:"名詞",meaning:"早上",note:"「朝ご飯」早饭，「朝起きる」早上起床。"} },
+      { text:"、" },
+      { text:"パンと" },
+      { text:"卵", kana:"たまご", analysis:{tag:"名詞",meaning:"鸡蛋",note:"「卵」（生鸡蛋）vs「玉子」（熟鸡蛋料理），书写上可互换。"} },
+      { text:"を" },
+      { text:"食", kana:"た", analysis:{tag:"動詞",meaning:"吃（连用形）",note:"「食べる」是经典二类动词，「食べました」为礼貌过去式。"} },
+      { text:"べました。それから" },
+      { text:"牛乳", kana:"ぎゅうにゅう", analysis:{tag:"名詞",meaning:"牛奶",note:"「牛乳」偏正式书面语；口语也说「ミルク」。"} },
+      { text:"を" },
+      { text:"飲", kana:"の", analysis:{tag:"動詞",meaning:"喝（连用形）",note:"「飲む」一类动词，「飲みます」礼貌体。"} },
+      { text:"みました。" },
+      { text:"おいしかったです。" },
+    ]
+  },
+  {
+    level: 1,
+    title: "図書館での勉強",
+    translation: "昨天我在图书馆学习到很晚。图书馆里很安静，非常适合学习。我学习了日语和数学。下次也想去图书馆学习。",
+    tokens: [
+      { text:"昨日", kana:"きのう", analysis:{tag:"名詞",meaning:"昨天",note:"「昨日」口语读「きのう」，正式场合「さくじつ」。"} },
+      { text:"、" },
+      { text:"図書館", kana:"としょかん", analysis:{tag:"名詞",meaning:"图书馆",note:"「図書館で勉強する」在图书馆学习，「図書館に行く」去图书馆。"} },
+      { text:"で" },
+      { text:"夜", kana:"よる", analysis:{tag:"名詞",meaning:"夜晚",note:"「夜遅くまで」直到深夜，常见副词短语。"} },
+      { text:"遅", kana:"おそ", analysis:{tag:"イ形容詞",meaning:"晚、迟",note:"「遅くまで」= 到很晚。「遅い」可形容时间也可形容速度慢。"} },
+      { text:"くまで" },
+      { text:"勉強", kana:"べんきょう", analysis:{tag:"名詞/サ変動詞",meaning:"学习",note:"「勉強する」是最常用的「学习」表达，サ変动词可直接接「する」。"} },
+      { text:"しました。" },
+      { text:"図書館", kana:"としょかん" },
+      { text:"の中は" },
+      { text:"静", kana:"しず", analysis:{tag:"ナ形容詞",meaning:"安静的",note:"「静かな場所」安静的地方，ナ形容词修饰名词时需加「な」。"} },
+      { text:"かで、とても" },
+      { text:"勉強", kana:"べんきょう" },
+      { text:"しやすいです。" },
+      { text:"日本語", kana:"にほんご", analysis:{tag:"名詞",meaning:"日语",note:"「日本語を勉強する」学习日语，是学日语者最常遇到的句型。"} },
+      { text:"と" },
+      { text:"数学", kana:"すうがく", analysis:{tag:"名詞",meaning:"数学",note:"理科科目的总称，日本高中理科核心课程之一。"} },
+      { text:"を" },
+      { text:"勉強", kana:"べんきょう" },
+      { text:"しました。また" },
+      { text:"今度", kana:"こんど", analysis:{tag:"名詞",meaning:"下次、这次",note:"「今度」兼有「这次」和「下次」两义，需结合语境判断。"} },
+      { text:"も" },
+      { text:"図書館", kana:"としょかん" },
+      { text:"で" },
+      { text:"勉強", kana:"べんきょう" },
+      { text:"したいです。" },
+    ]
+  },
+  {
+    level: 1,
+    title: "日本の食べ物",
+    translation: "日本料理有很多种类。寿司和拉面尤其受欢迎。各地还有许多当地特色料理，比如大阪的章鱼烧、北海道的螃蟹等，都非常好吃。",
+    tokens: [
+      { text:"日本", kana:"にほん" },
+      { text:"の" },
+      { text:"料理", kana:"りょうり", analysis:{tag:"名詞",meaning:"料理、菜肴",note:"「料理する」做饭，「料理人」厨师。"} },
+      { text:"にはたくさんの" },
+      { text:"種類", kana:"しゅるい", analysis:{tag:"名詞",meaning:"种类",note:"「〜の種類がある」有…的种类，是分类描述的核心句型。"} },
+      { text:"があります。" },
+      { text:"特", kana:"とく", analysis:{tag:"副詞",meaning:"特别",note:"「特に」尤其、特别，是表示强调的高频副词。"} },
+      { text:"に" },
+      { text:"寿司", kana:"すし", analysis:{tag:"名詞",meaning:"寿司",note:"日本代表性料理，有「握り寿司」「巻き寿司」等多种形式。"} },
+      { text:"や" },
+      { text:"ラーメンは" },
+      { text:"人気", kana:"にんき", analysis:{tag:"名詞",meaning:"受欢迎",note:"「人気がある」或「人気な〜」都可以表示"受欢迎的"。"} },
+      { text:"があります。また、" },
+      { text:"大阪", kana:"おおさか", analysis:{tag:"固有名詞",meaning:"大阪（城市名）",note:"日本第二大城市，以「たこ焼き」「お好み焼き」等美食著称。"} },
+      { text:"の" },
+      { text:"たこ焼きや" },
+      { text:"北海道", kana:"ほっかいどう", analysis:{tag:"固有名詞",meaning:"北海道",note:"日本最北的大岛，以海鲜、乳制品闻名。"} },
+      { text:"の" },
+      { text:"カニなど、" },
+      { text:"各地", kana:"かくち", analysis:{tag:"名詞",meaning:"各地",note:"「各地の名物」各地的名产，固定搭配。"} },
+      { text:"においしいご当地料理がたくさんあります。" },
+    ]
+  },
+  {
+    level: 2,
+    title: "日本の自動販売機文化",
+    translation: "在日本的街道上，无论走到哪里都能看到自动贩卖机。不仅有冷饮，还有热咖啡、杯面，甚至生鲜食品都能通过自动贩卖机购买。日本目前约有500万台自动贩卖机，数量居世界前列。便利的购物环境深受日本居民喜爱，也成为了许多外国游客感到惊讶的日本独特文化之一。近年来，更出现了支持现金和IC卡双重付款方式的新型机器，不断进化以满足多样化的需求。",
+    tokens: [
+      { text:"日本", kana:"にほん" },
+      { text:"の" },
+      { text:"街", kana:"まち", analysis:{tag:"名詞",meaning:"街道、城镇",note:"「街を歩く」漫步街头，「街中」整座城市里。"} },
+      { text:"を" },
+      { text:"歩", kana:"ある", analysis:{tag:"動詞",meaning:"走、步行",note:"「歩く」一类动词，「歩いている」正在走。"} },
+      { text:"くと、どこにでも" },
+      { text:"自動販売機", kana:"じどうはんばいき", analysis:{tag:"複合名詞",meaning:"自动贩卖机",note:"「自動」+「販売」+「機」的复合词。简称「自販機（じはんき）」。"} },
+      { text:"があります。" },
+      { text:"冷", kana:"つめ", analysis:{tag:"イ形容詞",meaning:"冷、凉",note:"「冷たい飲み物」冷饮，「冷たい人」冷漠的人（比喻用法）。"} },
+      { text:"たい" },
+      { text:"飲", kana:"の" },
+      { text:"み物だけでなく、温かいコーヒーや" },
+      { text:"カップラーメン、" },
+      { text:"生鮮食品", kana:"せいせんしょくひん", analysis:{tag:"名詞",meaning:"生鲜食品",note:"新鲜的肉、蔬菜、鱼等，是超市和自贩机新兴品类。"} },
+      { text:"まで" },
+      { text:"購入", kana:"こうにゅう", analysis:{tag:"名詞/サ変動詞",meaning:"购买",note:"「購入する」比「買う」更正式，多见于书面、广告。"} },
+      { text:"できます。" },
+      { text:"現在", kana:"げんざい", analysis:{tag:"名詞/副詞",meaning:"目前、现在",note:"「現在」常用于陈述当前状况，「現在の日本」当今的日本。"} },
+      { text:"、日本には約500万台の" },
+      { text:"自動販売機", kana:"じどうはんばいき" },
+      { text:"があり、世界トップクラスの" },
+      { text:"台数", kana:"だいすう", analysis:{tag:"名詞",meaning:"（机械的）数量",note:"「台数」专指机器、车辆等的数量，不能用于人或动物。"} },
+      { text:"を誇ります。" },
+      { text:"便利", kana:"べんり", analysis:{tag:"ナ形容詞",meaning:"便利的",note:"「便利な〜」修饰名词，「便利さ」名词化表示便利性。"} },
+      { text:"な買い物" },
+      { text:"環境", kana:"かんきょう", analysis:{tag:"名詞",meaning:"环境",note:"「買い物環境」购物环境，「環境問題」环境问题。"} },
+      { text:"が" },
+      { text:"居住者", kana:"きょじゅうしゃ", analysis:{tag:"名詞",meaning:"居住者、居民",note:"「〜者」表示具有某种身份的人，「居住」+「者」。"} },
+      { text:"に" },
+      { text:"喜", kana:"よろこ", analysis:{tag:"動詞",meaning:"喜爱、高兴",note:"「喜ばれる」被人喜爱，被动形高频用法。"} },
+      { text:"ばれているほか、" },
+      { text:"外国人", kana:"がいこくじん", analysis:{tag:"名詞",meaning:"外国人",note:"「外国人観光客」外国游客，常见组合词。"} },
+      { text:"観光客が" },
+      { text:"驚", kana:"おどろ", analysis:{tag:"動詞",meaning:"感到惊讶",note:"「〜に驚く」对…感到惊讶，常见句型。"} },
+      { text:"く日本" },
+      { text:"独自", kana:"どくじ", analysis:{tag:"ナ形容詞/名詞",meaning:"独特的、独有的",note:"「日本独自の文化」日本特有的文化，固定搭配。"} },
+      { text:"の" },
+      { text:"文化", kana:"ぶんか", analysis:{tag:"名詞",meaning:"文化",note:"「文化の違い」文化差异，常用于跨文化比较。"} },
+      { text:"にもなっています。近年では、現金とICカードの両方に" },
+      { text:"対応", kana:"たいおう", analysis:{tag:"名詞/サ変動詞",meaning:"对应、支持",note:"「〜に対応する」支持/应对…，科技语境高频词。"} },
+      { text:"した新型の" },
+      { text:"機械", kana:"きかい", analysis:{tag:"名詞",meaning:"机器、机械",note:"「機械が進化する」机器不断进化。"} },
+      { text:"も登場し、" },
+      { text:"多様", kana:"たよう", analysis:{tag:"ナ形容詞",meaning:"多样化的",note:"「多様なニーズ」多样化的需求，商业文章高频词。"} },
+      { text:"なニーズに" },
+      { text:"応", kana:"こた", analysis:{tag:"動詞",meaning:"回应、满足",note:"「ニーズに応える」满足需求，固定搭配。"} },
+      { text:"えるべく進化し続けています。" },
+    ]
+  },
+  {
+    level: 2,
+    title: "働き方の変化",
+    translation: "近年来，远程办公作为一种无需通勤的全新工作方式，在日本的各大企业中迅速普及。特别是受到新冠疫情的影响，这一变化更是显著加速。然而与此同时，居家办公也带来了一些新问题：由于工作与私生活的界限变得模糊，不少人感到无法充分休息；另一方面，对于年轻员工来说，在家中也难以得到上级的直接指导。面对这些挑战，许多企业开始探索一种更为灵活的混合办公模式，即结合远程与到岗两种方式，以期实现效率与员工身心健康的双重平衡。",
+    tokens: [
+      { text:"近年", kana:"きんねん", analysis:{tag:"名詞",meaning:"近年、近几年",note:"「近年、〜が増えている」近年来…在增加，时事文章开头常见句式。"} },
+      { text:"、" },
+      { text:"企業", kana:"きぎょう", analysis:{tag:"名詞",meaning:"企业",note:"「大企業」大企业，「中小企業」中小企业。"} },
+      { text:"の間では、" },
+      { text:"通勤", kana:"つうきん", analysis:{tag:"名詞/サ変動詞",meaning:"通勤、上下班",note:"「通勤時間」通勤时间，「通勤ラッシュ」早晚高峰。"} },
+      { text:"せずに働くリモートワークが急速に" },
+      { text:"普及", kana:"ふきゅう", analysis:{tag:"名詞/サ変動詞",meaning:"普及、推广",note:"「〜が普及する」…得以普及，自动词用法。"} },
+      { text:"しています。特に新型コロナウイルスの" },
+      { text:"影響", kana:"えいきょう", analysis:{tag:"名詞/サ変動詞",meaning:"影响",note:"「〜の影響を受ける」受到…的影响，被动搭配。"} },
+      { text:"により、この" },
+      { text:"変化", kana:"へんか", analysis:{tag:"名詞/サ変動詞",meaning:"变化",note:"「変化する」发生变化，自动词；「変化をもたらす」带来变化，他动词搭配。"} },
+      { text:"はさらに" },
+      { text:"加速", kana:"かそく", analysis:{tag:"名詞/サ変動詞",meaning:"加速",note:"「加速する」加速，「加速させる」使其加速（使役）。"} },
+      { text:"しました。しかし一方で、仕事と" },
+      { text:"私生活", kana:"しせいかつ", analysis:{tag:"名詞",meaning:"私人生活",note:"「公私」公私两方面，「私生活」特指个人私下的生活。"} },
+      { text:"の" },
+      { text:"境界", kana:"きょうかい", analysis:{tag:"名詞",meaning:"界限、边界",note:"「〜の境界が曖昧になる」界限变得模糊，描述变化的常用句型。"} },
+      { text:"が曖昧になり、十分に休めないという問題も生じています。また、若い" },
+      { text:"社員", kana:"しゃいん", analysis:{tag:"名詞",meaning:"员工、职员",note:"「新入社員」新入职员工，「社員研修」员工培训。"} },
+      { text:"にとっては、" },
+      { text:"上司", kana:"じょうし", analysis:{tag:"名詞",meaning:"上司、上级",note:"与「部下（ぶか）」（下属）相对，职场核心词汇。"} },
+      { text:"から直接" },
+      { text:"指導", kana:"しどう", analysis:{tag:"名詞/サ変動詞",meaning:"指导",note:"「指導を受ける」接受指导，「指導する」进行指导。"} },
+      { text:"を受けにくいという課題もあります。こうした状況を踏まえ、多くの" },
+      { text:"企業", kana:"きぎょう" },
+      { text:"はリモートと" },
+      { text:"出社", kana:"しゅっしゃ", analysis:{tag:"名詞/サ変動詞",meaning:"到岗、上班",note:"「出社する」去公司上班，「在宅（ざいたく）勤務」= 居家办公。"} },
+      { text:"を組み合わせたハイブリッドな" },
+      { text:"働", kana:"はたら", analysis:{tag:"動詞",meaning:"工作",note:"「働き方」= 工作方式，「働き方改革」日本近年重要政策关键词。"} },
+      { text:"き方を" },
+      { text:"模索", kana:"もさく", analysis:{tag:"名詞/サ変動詞",meaning:"摸索、探索",note:"「〜を模索する」摸索…，多用于找寻新出路、新方案的语境。"} },
+      { text:"しています。" },
+    ]
+  },
+  {
+    level: 3,
+    title: "食品ロス削減への取り組み",
+    translation: "所谓"食品浪费"，指的是尽管仍可食用，却被大量废弃的食品。在日本，每年约有600万吨食物被白白浪费，相当于全球粮食援助总量的约1.3倍。在政府和企业推进多项减少浪费举措的同时，近年来AI技术的应用也备受瞩目。部分便利店企业已开始运用AI根据天气、活动信息等数据进行精准的需求预测，从而合理控制进货量，力求将食品废弃量压缩至最低水平。与此同时，大型连锁超市也积极开展促销活动，以优惠价格出售临近保质期的商品，正逐步建立起让消费者积极参与减少浪费的社会体制。然而，仅凭企业和零售商的努力远远不够；若能在家庭层面也提高意识，从日常生活中的点滴做起，才能真正实现可持续的减少食品浪费。",
+    tokens: [
+      { text:"食品", kana:"しょくひん", analysis:{tag:"名詞",meaning:"食品",note:"「食品ロス」=食物浪费（Food Loss），是近年日本环保政策核心关键词。"} },
+      { text:"ロスとは、まだ食べられるにもかかわらず" },
+      { text:"廃棄", kana:"はいき", analysis:{tag:"名詞/サ変動詞",meaning:"废弃、处置",note:"「廃棄される」被废弃（被动），工业、食品语境高频词。"} },
+      { text:"される食品のことです。日本では毎年約600万トンの" },
+      { text:"食料", kana:"しょくりょう", analysis:{tag:"名詞",meaning:"粮食、食物",note:"「食料」偏指粮食资源，「食品」偏指加工食品，二者有细微区别。"} },
+      { text:"が" },
+      { text:"無駄", kana:"むだ", analysis:{tag:"名詞/ナ形容詞",meaning:"浪费、徒劳",note:"「無駄にする」浪费（他动），「無駄遣い」乱花钱，日常高频词。"} },
+      { text:"になっており、これは世界の食料援助の総量の約1.3倍に相当します。" },
+      { text:"政府", kana:"せいふ", analysis:{tag:"名詞",meaning:"政府",note:"「政府の方針」政府方针，「政府機関」政府机构。"} },
+      { text:"や企業がさまざまな" },
+      { text:"削減", kana:"さくげん", analysis:{tag:"名詞/サ変動詞",meaning:"削减、降低",note:"「コストを削減する」削减成本，「廃棄量を削減する」减少废弃量。"} },
+      { text:"策を推進する中で、近年は" },
+      { text:"人工知能", kana:"じんこうちのう", analysis:{tag:"名詞",meaning:"人工智能（AI）",note:"「人工知能」是AI的正式日语译名，缩写为「AI（エーアイ）」。"} },
+      { text:"の" },
+      { text:"活用", kana:"かつよう", analysis:{tag:"名詞/サ変動詞",meaning:"活用、充分利用",note:"「〜を活用する」充分利用…，与「使う」相比更强调有效运用。"} },
+      { text:"も注目を集めています。" },
+      { text:"一部", kana:"いちぶ", analysis:{tag:"名詞",meaning:"一部分、部分",note:"「一部の企業」部分企业，「一部地域」部分地区。"} },
+      { text:"のコンビニ" },
+      { text:"各社", kana:"かくしゃ", analysis:{tag:"名詞",meaning:"各公司",note:"「各社」= 各个公司，「各〜」是表示"每一个"的接头词。"} },
+      { text:"は、天気やイベント情報などのデータをもとにAIで" },
+      { text:"需要", kana:"じゅよう", analysis:{tag:"名詞",meaning:"需求",note:"「需要と供給（きょうきゅう）」供求关系，经济学基础概念。"} },
+      { text:"予測", kana:"よそく", analysis:{tag:"名詞/サ変動詞",meaning:"预测",note:"「需要を予測する」预测需求，AI+零售业的热门词汇。"} },
+      { text:"を行い、仕入れ量を" },
+      { text:"調整", kana:"ちょうせい", analysis:{tag:"名詞/サ変動詞",meaning:"调整",note:"「〜を調整する」调整…，多用于数量、计划的微调。"} },
+      { text:"することで、廃棄を" },
+      { text:"最小限", kana:"さいしょうげん", analysis:{tag:"名詞",meaning:"最低限度",note:"「〜を最小限に抑える」将…压缩到最低，商业、政策文章固定搭配。"} },
+      { text:"に抑えようとしています。一方、大手スーパーでも" },
+      { text:"消費期限", kana:"しょうひきげん", analysis:{tag:"名詞",meaning:"保质期（安全食用截止日期）",note:"「消費期限」= 食用安全截止日；「賞味期限（しょうみきげん）」= 最佳赏味期，二者含义不同。"} },
+      { text:"が近い商品を" },
+      { text:"割引", kana:"わりびき", analysis:{tag:"名詞/サ変動詞",meaning:"打折",note:"「割引する」打折，「割引価格」折扣价。"} },
+      { text:"で販売するキャンペーンを展開し、" },
+      { text:"消費者", kana:"しょうひしゃ", analysis:{tag:"名詞",meaning:"消费者",note:"「消費者庁（しょうひしゃちょう）」消费者厅，日本的消费者保护机构。"} },
+      { text:"が" },
+      { text:"積極的", kana:"せっきょくてき", analysis:{tag:"ナ形容詞",meaning:"积极的",note:"「積極的に〜する」积极地做…，与「消極的（しょうきょくてき）」消极的相对。"} },
+      { text:"に削減に関われる仕組みを整備しつつあります。しかし、企業や" },
+      { text:"小売業者", kana:"こうりぎょうしゃ", analysis:{tag:"名詞",meaning:"零售商",note:"「小売（こうり）」= 零售，「卸売（おろしうり）」= 批发。"} },
+      { text:"の" },
+      { text:"努力", kana:"どりょく", analysis:{tag:"名詞/サ変動詞",meaning:"努力",note:"「努力する」努力，「努力が実る」努力结出成果。"} },
+      { text:"だけでは" },
+      { text:"不十分", kana:"ふじゅうぶん", analysis:{tag:"ナ形容詞",meaning:"不充分",note:"「十分（じゅうぶん）」充分，加前缀「不」构成反义。"} },
+      { text:"であり、家庭レベルでも" },
+      { text:"意識", kana:"いしき", analysis:{tag:"名詞/サ変動詞",meaning:"意识",note:"「意識を高める」提高意识，「意識する」意识到。"} },
+      { text:"を高め、日常の小さな" },
+      { text:"行動", kana:"こうどう", analysis:{tag:"名詞/サ変動詞",meaning:"行动",note:"「行動する」采取行动，「〜を起こす」发起行动。"} },
+      { text:"から始めることが、" },
+      { text:"持続可能", kana:"じぞくかのう", analysis:{tag:"ナ形容詞",meaning:"可持续的",note:"「持続可能な社会」可持续社会，对应英文 Sustainable，SDGs核心词汇。"} },
+      { text:"な食品ロス削減につながると考えられています。" },
+    ]
+  },
+  {
+    level: 3,
+    title: "日本の少子高齢化問題",
+    translation: "在人口结构加速老龄化、出生率持续低迷的双重压力下，日本正面临着史无前例的"少子高龄化"社会挑战。2023年公布的数据显示，日本的合计特殊出生率降至历史最低的1.20，而65岁以上人口占总人口的比例已超过29%。这一趋势意味着劳动年龄人口的减少，可能对年金制度和医疗领域的财政持续性构成严峻威胁。为应对这一局面，政府相继出台了扩充育儿支持政策及推进外国劳动力引进等举措。另一方面，企业层面也正在摸索通过技术创新和自动化提升生产效率的可行路径，以应对劳动力短缺的现实压力。在这个课题上，单靠个别政策难以毕其功于一役，需要政府、企业与市民社会携手，形成跨部门的协同合力，方能从根本上解决这一深层次的社会结构性问题。",
+    tokens: [
+      { text:"日本", kana:"にほん" },
+      { text:"は、" },
+      { text:"少子高齢化", kana:"しょうしこうれいか", analysis:{tag:"複合名詞",meaning:"少子高龄化",note:"「少子（しょうし）」= 少子化（出生率下降）+「高齢化（こうれいか）」= 老龄化，是描述日本人口结构的核心政策词。"} },
+      { text:"という" },
+      { text:"前例", kana:"ぜんれい", analysis:{tag:"名詞",meaning:"先例、前例",note:"「前例のない〜」史无前例的…，「前例がない」没有先例。"} },
+      { text:"のない社会" },
+      { text:"課題", kana:"かだい", analysis:{tag:"名詞",meaning:"课题、问题",note:"「〜という課題に直面する」面临…这一课题，论述文常见句式。"} },
+      { text:"に直面しています。2023年に" },
+      { text:"公表", kana:"こうひょう", analysis:{tag:"名詞/サ変動詞",meaning:"公布、公开发布",note:"「公表する」正式公布，比「発表」更强调官方性。"} },
+      { text:"されたデータによると、" },
+      { text:"合計特殊出生率", kana:"ごうけいとくしゅしゅっしょうりつ", analysis:{tag:"専門名詞",meaning:"合计特殊出生率（TFR）",note:"指每位女性平均生育子女数，是衡量生育率的核心指标，1.2为历史最低。"} },
+      { text:"は過去最低の1.20を記録し、65歳以上の" },
+      { text:"人口", kana:"じんこう", analysis:{tag:"名詞",meaning:"人口",note:"「人口が減少する」人口减少，「人口問題」人口问题。"} },
+      { text:"が全人口の29%を超えました。この" },
+      { text:"傾向", kana:"けいこう", analysis:{tag:"名詞",meaning:"趋势、倾向",note:"「〜という傾向がある」有…的趋势，分析、论述文高频词。"} },
+      { text:"は、" },
+      { text:"労働", kana:"ろうどう", analysis:{tag:"名詞",meaning:"劳动",note:"「労働力不足」劳动力不足，「労働人口」劳动年龄人口。"} },
+      { text:"人口の減少を意味し、" },
+      { text:"年金", kana:"ねんきん", analysis:{tag:"名詞",meaning:"年金、养老金",note:"「年金制度」养老金制度，「年金を受け取る」领取年金。"} },
+      { text:"制度や" },
+      { text:"医療", kana:"いりょう", analysis:{tag:"名詞",meaning:"医疗",note:"「医療費」医疗费，「医療機関」医疗机构。"} },
+      { text:"分野の" },
+      { text:"財政的", kana:"ざいせいてき", analysis:{tag:"ナ形容詞",meaning:"财政性的",note:"「財政的な持続可能性」财政层面的可持续性，政策论述关键词。"} },
+      { text:"持続可能性", kana:"じぞくかのうせい", analysis:{tag:"名詞",meaning:"可持续性",note:"「持続可能性を確保する」确保可持续性，SDGs相关核心词。"} },
+      { text:"を脅かす" },
+      { text:"可能性", kana:"かのうせい", analysis:{tag:"名詞",meaning:"可能性",note:"「〜する可能性がある」有…的可能性，表示推测的重要句型。"} },
+      { text:"があります。こうした" },
+      { text:"状況", kana:"じょうきょう", analysis:{tag:"名詞",meaning:"状况、局面",note:"「〜という状況」处于…的状况，「状況を打開する」打破局面。"} },
+      { text:"に対応するため、政府は" },
+      { text:"育児", kana:"いくじ", analysis:{tag:"名詞",meaning:"育儿",note:"「育児支援」育儿支持，「育児休業（育休）」育儿假。"} },
+      { text:"支援の" },
+      { text:"充実", kana:"じゅうじつ", analysis:{tag:"名詞/サ変動詞",meaning:"充实、完善",note:"「〜を充実させる」使…更加完善，政策文章高频词。"} },
+      { text:"や外国人" },
+      { text:"労働力", kana:"ろうどうりょく", analysis:{tag:"名詞",meaning:"劳动力",note:"「労働力を確保する」确保劳动力，「外国人労働力」外籍劳动力。"} },
+      { text:"の" },
+      { text:"受け入れ", kana:"うけいれ", analysis:{tag:"名詞",meaning:"接受、引进",note:"「〜を受け入れる」接受、引进，「外国人の受け入れ」引进外籍人士。"} },
+      { text:"促進などの政策を打ち出しています。また、企業側でも、" },
+      { text:"技術革新", kana:"ぎじゅつかくしん", analysis:{tag:"名詞",meaning:"技术革新",note:"「技術革新を推進する」推进技术创新，产业政策核心词。"} },
+      { text:"や" },
+      { text:"自動化", kana:"じどうか", analysis:{tag:"名詞",meaning:"自动化",note:"「〜を自動化する」将…自动化，制造业、IT行业高频词。"} },
+      { text:"によって" },
+      { text:"生産性", kana:"せいさんせい", analysis:{tag:"名詞",meaning:"生产率、生产效率",note:"「生産性を向上させる」提升生产率，「低生産性」低效率。"} },
+      { text:"を高める取り組みを模索しています。この課題は、単独の政策では" },
+      { text:"解決", kana:"かいけつ", analysis:{tag:"名詞/サ変動詞",meaning:"解决",note:"「〜を解決する」解决…，「解決策」解决方案。"} },
+      { text:"が" },
+      { text:"困難", kana:"こんなん", analysis:{tag:"ナ形容詞/名詞",meaning:"困难",note:"「〜が困難だ」做…很困难，书面语比「難しい」更正式。"} },
+      { text:"であり、政府・企業・市民が" },
+      { text:"連携", kana:"れんけい", analysis:{tag:"名詞/サ変動詞",meaning:"联携、协作",note:"「〜と連携する」与…协作，「官民連携」官民合作。"} },
+      { text:"して取り組むことが求められています。" },
+    ]
+  }
+];
 
-          // 核心重写：安全切换器，防止空对象引发React崩溃白屏
-          const fetchRandomOnlineArticle = (level, lengthType) => {
-            handleStopSpeech(); 
-            setIsCustomModeActive(false);
-            setCurrentLevel(level);
-            setCurrentLengthType(lengthType);
+let currentLevel = 2;
+let articleIndex = 0;
+let currentArticle = null;
+let showTrans = false;
+let activeTokenIdx = null;
+let speechRate = 0.85;
+let synth = window.speechSynthesis;
+let isReading = false;
+let highlightedSpans = [];
+let activeRuby = null;
 
-            const pool = ONLINE_NEWS_POOL[level] && ONLINE_NEWS_POOL[level][lengthType];
-            
-            if (!pool || pool.length === 0) {
-              alert(`当前网络库中 ${level} 级暂无此篇幅规格，已为您自动适配已有精选段落。`);
-              // 安全降级：寻找任何一个有数据的分类
-              const availableKey = ["SHORT", "MEDIUM", "LONG"].find(k => ONLINE_NEWS_POOL[level][k] && ONLINE_NEWS_POOL[level][k].length > 0);
-              if (availableKey) {
-                setArticle(ONLINE_NEWS_POOL[level][availableKey][0]);
-                setCurrentLengthType(availableKey);
-              }
-            } else {
-              const randomIndex = Math.floor(Math.random() * pool.length);
-              setArticle(pool[randomIndex]);
-            }
-            setActiveAnalysisIdx(null);
-          };
+function articlesForLevel(level) {
+  return ARTICLES.filter(a => a.level === level);
+}
 
-          const handleInjectUserText = () => {
-            if (!userTextDraft.trim()) {
-              alert("请输入或粘贴一段您遇到不懂的日语文章！");
-              return;
-            }
-            handleStopSpeech();
-            setIsCustomModeActive(true);
-            setCurrentLevel("用户注入");
-            setCurrentLengthType("自定义");
-            
-            const processedArticle = parseUserCustomText(userTextDraft);
-            setArticle(processedArticle);
-            setActiveAnalysisIdx(null);
-            setUserTextDraft(""); 
-          };
+function charCount(article) {
+  return article.tokens.reduce((s, t) => s + t.text.length, 0);
+}
 
-          // ==========================================
-          // 🔥 精准优化的 AI 语音控制核心引擎
-          // ==========================================
-          const handlePlaySpeech = () => {
-            if (!synthRef.current) {
-              alert("当前设备环境不支持 Web Speech API。推荐使用 iPad Safari 浏览器。");
-              return;
-            }
+function selectLevel(level) {
+  stopReading();
+  currentLevel = level;
+  articleIndex = 0;
+  closeAnalysis();
+  document.querySelectorAll('.level-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.level) === level);
+  });
+  renderArticle();
+}
 
-            if (isPlaying) {
-              handleStopSpeech();
-              return;
-            }
+function prevArticle() {
+  stopReading(); closeAnalysis();
+  const pool = articlesForLevel(currentLevel);
+  if (!pool.length) return;
+  articleIndex = (articleIndex - 1 + pool.length) % pool.length;
+  renderArticle();
+}
 
-            // 1. 语流平滑：拼接文本，消除没有空格时产生的机器人结巴停顿
-            const textToSpeak = article.elements.map(el => el.text).join("");
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'ja-JP'; 
-            
-            // 2. 语气调优：语速最适位 0.88x，调高音调 1.05，让发音更有灵动感和呼吸感
-            utterance.rate = 0.88;
-            utterance.pitch = 1.05; 
+function nextArticle() {
+  stopReading(); closeAnalysis();
+  const pool = articlesForLevel(currentLevel);
+  if (!pool.length) return;
+  articleIndex = (articleIndex + 1) % pool.length;
+  renderArticle();
+}
 
-            // 3. 筛选最顶级原生声线（优先 iOS Kyoko 声线）
-            const voices = synthRef.current.getVoices();
-            const premiumVoice = voices.find(v => (v.lang.includes('ja-JP') || v.lang.includes('ja_JP')) && (v.name.includes('Premium') || v.name.includes('Enhanced') || v.name.includes('Kyoko'))) 
-                                 || voices.find(v => v.lang.includes('ja-JP'));
-            
-            if (premiumVoice) {
-              utterance.voice = premiumVoice;
-            }
+function renderArticle() {
+  const pool = articlesForLevel(currentLevel);
+  if (!pool.length) {
+    document.getElementById('passageText').innerHTML = '<span style="color:#aaa;font-size:14px">この等級の記事はまだありません。</span>';
+    return;
+  }
+  if (articleIndex >= pool.length) articleIndex = 0;
+  currentArticle = pool[articleIndex];
 
-            // 4. 卡拉OK逐字高亮平滑检测
-            let lastCharIndex = -1;
-            utterance.onboundary = (event) => {
-              if (event.name === 'word' || event.name === 'char') {
-                const currentIndex = event.charIndex;
-                if (currentIndex !== lastCharIndex) {
-                  lastCharIndex = currentIndex;
-                  setCurrentReadingCharIdx(currentIndex);
-                }
-              }
-            };
+  const count = charCount(currentArticle);
+  document.getElementById('badgeLevel').textContent = LEVELS[currentLevel].name;
+  document.getElementById('badgeCount').textContent = count + ' 字';
+  document.getElementById('articleTitle').textContent = currentArticle.title;
 
-            utterance.onend = () => { setIsPlaying(false); setCurrentReadingCharIdx(-1); };
-            utterance.onerror = () => { setIsPlaying(false); setCurrentReadingCharIdx(-1); };
+  const container = document.getElementById('passageText');
+  container.innerHTML = '';
+  highlightedSpans = [];
+  let spanIdx = 0;
 
-            utteranceRef.current = utterance;
-            setIsPlaying(true);
-            
-            // 5. 强刷底层硬件缓存，规避 iPad 连续点触造成的紊乱
-            synthRef.current.cancel();
-            setTimeout(() => {
-              synthRef.current.speak(utterance);
-            }, 50); 
-          };
+  currentArticle.tokens.forEach((token, tidx) => {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'token-wrap';
+    const ruby = document.createElement('ruby');
 
-          const handleStopSpeech = () => {
-            if (synthRef.current) synthRef.current.cancel();
-            setIsPlaying(false);
-            setCurrentReadingCharIdx(-1);
-          };
+    if (token.analysis) {
+      ruby.classList.add('word-clickable');
+      ruby.dataset.tidx = tidx;
+      ruby.onclick = (e) => { e.stopPropagation(); onWordClick(tidx, ruby); };
+    }
 
-          React.useEffect(() => {
-            return () => { if (synthRef.current) synthRef.current.cancel(); };
-          }, []);
+    const chars = [...token.text];
+    chars.forEach(ch => {
+      const cs = document.createElement('span');
+      cs.className = 'char-span';
+      cs.textContent = ch;
+      cs.dataset.spanIdx = spanIdx++;
+      ruby.appendChild(cs);
+      highlightedSpans.push(cs);
+    });
 
-          const getHighlightClass = (el, elIdx) => {
-            if (!isPlaying || currentReadingCharIdx === -1) return "";
-            let cumulativeLength = 0;
-            for (let i = 0; i < elIdx; i++) {
-              cumulativeLength += article.elements[i].text.length;
-            }
-            const elLength = el.text.length;
-            if (currentReadingCharIdx >= cumulativeLength - 1 && currentReadingCharIdx <= cumulativeLength + elLength + 1) {
-              return "speech-reading-highlight";
-            }
-            return "";
-          };
+    const rt = document.createElement('rt');
+    if (token.kana) {
+      rt.textContent = token.kana;
+    } else {
+      rt.className = 'ghost';
+      rt.textContent = '\u200b';
+    }
+    ruby.appendChild(rt);
+    wrapper.appendChild(ruby);
+    container.appendChild(wrapper);
+  });
 
-          return (
-            <div className="min-h-screen flex flex-col justify-between" onClick={() => handleStopSpeech}>
-              
-              {/* 顶部控制中枢 */}
-              <header className="bg-white border-b border-zinc-200 px-6 py-4 sticky top-0 z-50 shadow-sm">
-                <div className="max-w-6xl mx-auto flex flex-col xl:flex-row justify-between items-center gap-4">
-                  
-                  <div className="flex items-center space-x-3 w-full xl:w-auto justify-between xl:justify-start">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xl font-black tracking-tight text-zinc-900">日本語<span className="text-blue-600">双轨精读本</span></span>
-                      <span className="text-xs font-mono px-2 py-0.5 bg-zinc-900 text-white rounded font-bold">V3.1 极稳版</span>
-                    </div>
-                    <button 
-                      onClick={() => setShowTranslation(!showTranslation)} 
-                      className="text-xs bg-zinc-100 hover:bg-zinc-200 text-zinc-600 px-2.5 py-1 rounded border border-zinc-200 xl:hidden"
-                    >
-                      {showTranslation ? "👁 隐藏译文" : "👁 显示译文"}
-                    </button>
-                  </div>
+  document.getElementById('transText').textContent = currentArticle.translation;
+  document.getElementById('transBox').style.display = showTrans ? 'block' : 'none';
+  document.getElementById('transToggleLabel').textContent = showTrans ? '隐藏中文译文' : '显示中文译文';
+}
 
-                  {/* 等级选择器 */}
-                  <div className="flex flex-wrap items-center bg-zinc-100 border border-zinc-200 rounded-xl p-1 gap-1 text-xs w-full xl:w-auto">
-                    <span className="text-zinc-500 px-2 font-bold text-[11px] tracking-wider">🎯 能力层级:</span>
-                    {["N5", "N3", "N2"].map((lvl) => (
-                      <button 
-                        key={lvl} 
-                        onClick={() => fetchRandomOnlineArticle(lvl, currentLengthType)} 
-                        className={`px-3 py-1.5 rounded-lg font-bold transition-all ${(!isCustomModeActive && currentLevel === lvl) ? "bg-blue-600 text-white shadow-sm" : "text-zinc-600 hover:bg-zinc-200"}`}
-                      >
-                        {lvl === "N5" ? "N5 基础圈" : lvl === "N3" ? "N3 进阶圈" : "N2/N1 新闻圈"}
-                      </button>
-                    ))}
-                  </div>
+function onWordClick(tidx, rubyEl) {
+  if (!currentArticle) return;
+  const token = currentArticle.tokens[tidx];
+  if (!token.analysis) return;
+  if (activeRuby) activeRuby.classList.remove('word-active');
+  if (activeTokenIdx === tidx) {
+    activeTokenIdx = null; activeRuby = null; closeAnalysis(); return;
+  }
+  activeTokenIdx = tidx;
+  activeRuby = rubyEl;
+  rubyEl.classList.add('word-active');
+  document.getElementById('anaWord').textContent = token.text + (token.kana ? `（${token.kana}）` : '');
+  document.getElementById('anaTag').textContent = token.analysis.tag;
+  document.getElementById('anaMeaning').textContent = token.analysis.meaning;
+  document.getElementById('anaNote').textContent = token.analysis.note;
+  document.getElementById('analysisCard').style.display = 'block';
+  document.getElementById('analysisCard').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
 
-                  {/* 篇幅字数过滤器 */}
-                  <div className="flex flex-wrap items-center bg-amber-50 border border-amber-200 rounded-xl p-1 gap-1 text-xs w-full xl:w-auto">
-                    <span className="text-amber-700 px-2 font-bold text-[11px] tracking-wider">📏 篇幅字数分段:</span>
-                    {[
-                      { key: "SHORT", name: "短篇 (50-200字)" },
-                      { key: "MEDIUM", name: "中篇 (200-500字)" },
-                      { key: "LONG", name: "长篇 (500-1000字)" }
-                    ].map((len) => (
-                      <button 
-                        key={len.key} 
-                        onClick={() => fetchRandomOnlineArticle(isCustomModeActive ? "N3" : currentLevel, len.key)} 
-                        className={`px-2.5 py-1.5 rounded-lg font-bold transition-all ${(!isCustomModeActive && currentLengthType === len.key) ? "bg-amber-600 text-white shadow-sm" : "text-amber-800 hover:bg-amber-100"}`}
-                      >
-                        {len.name}
-                      </button>
-                    ))}
-                  </div>
+function closeAnalysis() {
+  activeTokenIdx = null;
+  if (activeRuby) { activeRuby.classList.remove('word-active'); activeRuby = null; }
+  document.getElementById('analysisCard').style.display = 'none';
+}
 
-                  <button 
-                    onClick={() => setShowTranslation(!showTranslation)} 
-                    className={`hidden xl:block text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${showTranslation ? "bg-white border-zinc-200 text-zinc-700" : "bg-zinc-200 border-zinc-300 text-zinc-500"}`}
-                  >
-                    {showTranslation ? "隐藏对照中文译文" : "显示完整中文译文"}
-                  </button>
-                </div>
-              </header>
+function toggleTrans() {
+  showTrans = !showTrans;
+  document.getElementById('transBox').style.display = showTrans ? 'block' : 'none';
+  document.getElementById('transToggleLabel').textContent = showTrans ? '隐藏中文译文' : '显示中文译文';
+}
 
-              {/* 核心展示画布 */}
-              <main className="flex-grow max-w-5xl w-full mx-auto px-4 py-6 flex flex-col justify-start gap-4">
-                
-                {/* 轨道 B：私人长文输入舱 */}
-                <div className="bg-white border border-blue-100 rounded-2xl p-4 shadow-sm">
-                  <div className="text-xs font-bold text-blue-900 mb-2">📥 轨道B：粘贴您在别的网站遇到不懂的任何字数长短文</div>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text"
-                      value={userTextDraft}
-                      onChange={(e) => setUserTextDraft(e.target.value)}
-                      placeholder="在这里粘贴任意日文长句或段落，系统会自动切段注音并发音..."
-                      className="flex-grow text-xs font-mono bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-zinc-800"
-                    />
-                    <button 
-                      onClick={handleInjectUserText}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 rounded-xl transition-colors whitespace-nowrap"
-                    >
-                      AI 自主切段分析 ⚡
-                    </button>
-                  </div>
-                </div>
+function loadUserText() {
+  const raw = document.getElementById('userInput').value.trim();
+  if (!raw) { alert('日本語のテキストを入力してください。'); return; }
+  stopReading(); closeAnalysis();
+  const tokens = [];
+  const re = /([\u4e00-\u9faf\u3400-\u4dbf]+|[^\u4e00-\u9faf\u3400-\u4dbf]+)/g;
+  let m;
+  while ((m = re.exec(raw)) !== null) {
+    const chunk = m[1];
+    const isKanji = /[\u4e00-\u9faf]/.test(chunk);
+    tokens.push({ text: chunk, kana: isKanji ? 'かんじ' : undefined });
+  }
+  const count = raw.length;
+  let lvl = 0;
+  if (count > 350) lvl = 3;
+  else if (count > 150) lvl = 2;
+  else if (count > 50) lvl = 1;
+  currentArticle = { level: lvl, title: `ユーザー入力（${count}字）`, translation: '（AIによる自動解析モード）', tokens };
+  document.getElementById('badgeLevel').textContent = LEVELS[lvl].name + '相当';
+  document.getElementById('badgeCount').textContent = count + ' 字';
+  document.getElementById('articleTitle').textContent = currentArticle.title;
+  const container = document.getElementById('passageText');
+  container.innerHTML = '';
+  highlightedSpans = [];
+  let si = 0;
+  tokens.forEach(token => {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'token-wrap';
+    const ruby = document.createElement('ruby');
+    const chars = [...token.text];
+    chars.forEach(ch => {
+      const cs = document.createElement('span');
+      cs.className = 'char-span';
+      cs.textContent = ch;
+      cs.dataset.spanIdx = si++;
+      ruby.appendChild(cs);
+      highlightedSpans.push(cs);
+    });
+    const rt = document.createElement('rt');
+    if (token.kana) { rt.textContent = token.kana; }
+    else { rt.className = 'ghost'; rt.textContent = '\u200b'; }
+    ruby.appendChild(rt);
+    wrapper.appendChild(ruby);
+    container.appendChild(wrapper);
+  });
+  document.getElementById('transText').textContent = currentArticle.translation;
+  document.getElementById('userInput').value = '';
+}
 
-                {/* 精准来源高亮标注 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-zinc-400 font-mono px-1 gap-1">
-                  <div>🎯 当前文章截取来源: <span className="font-bold text-zinc-700 bg-zinc-200 px-2 py-0.5 rounded">{article?.source || "未知源"}</span></div>
-                  <div className="text-zinc-500">
-                    当前规格: <span className="text-amber-600 font-bold">{currentLengthType}</span> 段落 • 点击下划线汉字查看词性标签
-                  </div>
-                </div>
+function updateSpeed(val) {
+  speechRate = parseFloat(val);
+  document.getElementById('speedVal').textContent = val + '×';
+}
 
-                {/* 综合大标题与 AI 朗读大控制台 */}
-                <div className="bg-white border border-zinc-200 p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-0.5 text-[10px] font-black rounded ${isCustomModeActive ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>
-                      {currentLevel}
-                    </span>
-                    <h2 className="text-base font-bold text-zinc-900 line-clamp-1">{article?.title || "未载入文章"}</h2>
-                  </div>
-                  
-                  <button 
-                    onClick={handlePlaySpeech}
-                    className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center space-x-2 border transition-all ${isPlaying ? "bg-red-500 text-white border-red-600 animate-pulse" : "bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700"}`}
-                  >
-                    <span>{isPlaying ? "⏹ 停止播放当前段落" : "🔊 启动 AI 流畅阅读 (0.88x 听读高亮)"}</span>
-                  </button>
-                </div>
+function toggleRead() {
+  if (isReading) { stopReading(); return; }
+  startReading();
+}
 
-                {/* 最终纸张：顶置注音排版 */}
-                <div className="bg-white rounded-2xl border border-zinc-200 shadow-md p-8 md:p-12 leading-relaxed tracking-widest select-none min-h-[220px] flex items-center">
-                  <div className="text-2xl md:text-3xl font-normal text-zinc-800 flex flex-wrap items-end gap-y-16 gap-x-1.5 w-full">
-                    {article && article.elements ? article.elements.map((el, idx) => {
-                      const isClickable = el.hasAnalysis;
-                      const isReadingStyle = getHighlightClass(el, idx);
-                      const activeAnalysisStyle = activeAnalysisIdx === idx ? "text-blue-600 bg-blue-50/80 rounded" : "";
+function startReading() {
+  if (!synth || !currentArticle) return;
+  synth.cancel();
+  const text = currentArticle.tokens.map(t => t.text).join('');
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ja-JP';
+  utter.rate = speechRate;
+  utter.pitch = 1.05;
+  const voices = synth.getVoices();
+  const best = voices.find(v => v.lang.startsWith('ja') && (v.name.includes('Kyoko') || v.name.includes('Premium') || v.name.includes('Enhanced')))
+               || voices.find(v => v.lang.startsWith('ja'));
+  if (best) utter.voice = best;
+  utter.onboundary = (e) => {
+    const idx = e.charIndex;
+    highlightedSpans.forEach((s, i) => {
+      s.classList.toggle('reading-hi', i >= idx && i < idx + 2);
+    });
+  };
+  utter.onend = utter.onerror = () => {
+    isReading = false;
+    highlightedSpans.forEach(s => s.classList.remove('reading-hi'));
+    setReadBtn(false);
+  };
+  isReading = true;
+  setReadBtn(true);
+  setTimeout(() => synth.speak(utter), 50);
+}
 
-                      return (
-                        <span 
-                          key={idx}
-                          onClick={() => isClickable && setActiveAnalysisIdx(activeAnalysisIdx === idx ? null : idx)}
-                          className={`${isClickable ? "grammar-word" : ""} ${isReadingStyle} ${activeAnalysisStyle} inline-block p-0.5 transition-all duration-150`}
-                        >
-                          <ruby>
-                            <span>{el.text}</span>
-                            {el.isKanji ? (
-                              <rt>{el.kana}</rt>
-                            ) : (
-                              <rt className="opacity-0 select-none pointer-events-none">.</rt>
-                            )}
-                          </ruby>
-                        </span>
-                      );
-                    }) : <p className="text-xs text-zinc-400">暂无可以渲染的正文数据</p>}
-                  </div>
-                </div>
+function stopReading() {
+  synth && synth.cancel();
+  isReading = false;
+  highlightedSpans.forEach(s => s.classList.remove('reading-hi'));
+  setReadBtn(false);
+}
 
-                {/* 隐藏式 AI 单词文法精读解析卡片 */}
-                {activeAnalysisIdx !== null && article && article.elements && article.elements[activeAnalysisIdx] && (
-                  <div className="analysis-card bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200/80 rounded-2xl p-5 shadow-sm">
-                    <div className="flex justify-between items-start border-b border-blue-200/50 pb-2 mb-3">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="text-sm font-black text-blue-900">
-                          AI 智能精读分词: 【{article.elements[activeAnalysisIdx].text}】
-                        </h3>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded font-mono shadow-sm ${article.elements[activeAnalysisIdx].analysis.color || "bg-zinc-100 text-zinc-700"}`}>
-                          🏷 {article.elements[activeAnalysisIdx].analysis.type}
-                        </span>
-                      </div>
-                      <button onClick={() => setActiveAnalysisIdx(null)} className="text-xs text-blue-500 hover:text-blue-700 font-bold">✕ 收起</button>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <strong className="text-zinc-400 text-[11px] uppercase tracking-wider block mb-0.5">中文精准核心释义:</strong>
-                        <p className="font-bold text-sm text-zinc-900">{article.elements[activeAnalysisIdx].analysis.meaning}</p>
-                      </div>
-                      <div className="text-xs text-zinc-700 leading-relaxed bg-white/90 p-3 rounded-xl border border-blue-100/60 shadow-inner">
-                        <strong className="text-blue-900 font-bold block mb-1">💡 核心语用场境与难点解析:</strong>
-                        {article.elements[activeAnalysisIdx].analysis.grammar}
-                      </div>
-                    </div>
-                  </div>
-                )}
+function setReadBtn(on) {
+  document.getElementById('readBtn').className = 'read-btn ' + (on ? 'on' : 'off');
+  document.getElementById('readIcon').textContent = on ? '⏹' : '▶';
+  document.getElementById('readLabel').textContent = on ? '停止' : 'AI 朗読';
+}
 
-                {/* 底部中文全量翻译对照 */}
-                {showTranslation && article && (
-                  <div className="bg-zinc-800 text-zinc-200 p-5 rounded-2xl border border-zinc-700 shadow-inner text-xs leading-relaxed transition-all">
-                    <strong className="block text-[11px] font-mono uppercase tracking-widest text-zinc-400 mb-1.5">🇨🇳 完整全量中文对照翻译参考：</strong>
-                    {article.translation}
-                  </div>
-                )}
+if (synth && synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = () => {};
+}
 
-              </main>
-
-              <footer className="text-center py-6 text-[11px] text-zinc-400 border-t border-zinc-200 bg-white font-mono">
-                Ultimate Jp Reader Core V3.1 • 复合防白屏底层保障架构
-              </footer>
-            </div>
-          );
-        }
-
-        ReactDOM.createRoot(document.getElementById('root')).render(<JpUltimateReaderApp />);
-    </script>
+document.addEventListener('DOMContentLoaded', () => { renderArticle(); });
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#analysisCard') && !e.target.closest('.word-clickable')) closeAnalysis();
+});
+</script>
 </body>
 </html>
